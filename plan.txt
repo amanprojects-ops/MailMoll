@@ -1,0 +1,393 @@
+# Project: Multi-SMTP Email Management System
+
+Act as a Senior PHP Developer, SaaS Product Architect, Database Engineer and UI/UX Designer.
+
+Build a professional, responsive, self-hosted Multi-SMTP Email Management Dashboard using PHP, SQLite, HTML5, CSS3 and modern JavaScript.
+
+The application should have a premium SaaS-style interface, secure authentication, SMTP account management, campaign management, email queues, delivery monitoring and detailed analytics.
+
+## 1. Technology Stack
+
+Backend:
+- PHP 8.2+
+- SQLite 3 with PDO
+- Composer for PHP dependencies
+- PHPMailer for SMTP transport
+- PHP Sessions for authentication
+- REST-style PHP API endpoints
+
+Frontend:
+- HTML5
+- CSS3
+- Vanilla JavaScript ES6+
+- Bootstrap 5.3
+- Bootstrap Icons
+- Chart.js for analytics
+- DataTables for server management tables
+- SweetAlert2 for confirmation dialogs
+- Toastify.js for notifications
+- Flatpickr for date/time selection
+- CodeMirror for HTML email template editing
+- Quill.js for rich-text email editor
+- SortableJS for drag-and-drop organization
+
+Use CDN libraries where appropriate and provide local asset fallback options.
+
+## 2. Design System
+
+Create a premium SaaS dashboard.
+
+Visual direction:
+- Modern enterprise dashboard
+- Clean, minimal and professional
+- Dark sidebar with light main workspace
+- Optional dark mode
+- Soft shadows and rounded cards
+- Consistent spacing and typography
+- Responsive layout
+- Smooth hover effects
+- Skeleton loading states
+- Empty states and error states
+
+Color palette:
+- Primary: #6366F1
+- Secondary: #64748B
+- Success: #10B981
+- Warning: #F59E0B
+- Danger: #EF4444
+- Background: #F8FAFC
+- Sidebar: #111827
+- Cards: #FFFFFF
+
+## 3. Dashboard Layout
+
+Sidebar navigation:
+
+1. Overview
+2. SMTP Accounts
+3. SMTP Groups
+4. Campaigns
+5. Email Templates
+6. Contacts
+7. Email Queue
+8. Delivery Logs
+9. Bounce Management
+10. Suppression & Unsubscribe
+11. Analytics
+12. System Settings
+13. User Profile
+
+Top navigation:
+- Global search
+- Notifications
+- Theme switcher
+- Profile dropdown
+
+Dashboard overview cards:
+- Total SMTP Accounts
+- Active SMTP Accounts
+- Emails Queued
+- Emails Sent
+- Delivered
+- Failed
+- Bounced
+- Delivery Rate
+
+Charts:
+- Email sending activity
+- SMTP-wise performance
+- Daily delivery statistics
+- Campaign performance
+
+## 4. SMTP Account Management
+
+Create an advanced SMTP management interface.
+
+Features:
+- Add SMTP account
+- Edit SMTP account
+- Delete SMTP account
+- Enable/disable account
+- Test SMTP connection
+- Verify TLS/SSL configuration
+- SMTP connection status
+- Daily sending quota
+- Hourly sending quota
+- Sent count
+- Failed count
+- Last connection test
+- Provider name
+- From name and email
+
+SMTP fields:
+- SMTP Host
+- SMTP Port
+- Encryption (SSL/TLS/STARTTLS/None)
+- Username
+- Password
+- From Email
+- From Name
+- Daily Limit
+- Hourly Limit
+- Priority
+- Status
+
+SMTP credentials must be encrypted at rest. Never expose SMTP passwords in API responses or logs.
+
+## 5. SMTP Routing Engine
+
+Create a configurable SMTP routing module.
+
+Supported routing strategies:
+- Round Robin
+- Weighted Distribution
+- Least Used
+- Priority Based
+- Manual SMTP Selection
+
+Requirements:
+- Respect provider-defined sending quotas.
+- Never exceed account-level hourly or daily limits.
+- Respect recipient consent and suppression lists.
+- Prevent duplicate message dispatch.
+- Handle SMTP connection failures.
+- Retry temporary failures using exponential backoff.
+- Do not retry permanent delivery errors.
+- Record the SMTP account used for every message.
+
+## 6. Campaign Management
+
+Create a campaign creation wizard.
+
+Steps:
+1. Campaign Information
+2. Sender Configuration
+3. Recipient Selection
+4. Email Content
+5. Sending Schedule
+6. Review and Confirm
+
+Features:
+- Campaign title
+- Subject
+- Sender name
+- Sender email
+- HTML email editor
+- Plain-text fallback
+- Test email
+- CSV contact import
+- Recipient segmentation
+- Schedule campaign
+- Pause/resume campaign
+- Campaign status
+- Campaign history
+
+Only send to contacts who have explicitly opted in.
+
+## 7. Email Template Management
+
+Features:
+- Create template
+- Edit template
+- HTML source editor
+- Visual rich-text editor
+- Template preview
+- Test email
+- Save reusable templates
+
+Include placeholders:
+{{first_name}}
+{{last_name}}
+{{email}}
+{{unsubscribe_url}}
+
+## 8. Email Queue
+
+Build a dedicated queue monitoring interface.
+
+Display:
+- Message ID
+- Campaign
+- Recipient
+- Selected SMTP
+- Queue status
+- Attempts
+- Scheduled time
+- Last error
+
+Queue states:
+- Pending
+- Processing
+- Sent
+- Retry
+- Failed
+- Cancelled
+
+Implement a PHP CLI worker using SQLite transactions and atomic job claiming. Use scheduled cron execution for shared hosting compatibility.
+
+Do not run long-running email operations inside ordinary browser requests.
+
+## 9. Delivery Logs
+
+Create detailed logs:
+- Recipient
+- Campaign
+- SMTP account
+- Message ID
+- Timestamp
+- Delivery attempt
+- Response code
+- Error message
+- Processing status
+
+Never store email body contents or SMTP credentials in diagnostic logs unnecessarily.
+
+## 10. Analytics
+
+Use Chart.js to display:
+- Total emails sent
+- Successful SMTP submissions
+- Failed submissions
+- Bounce statistics
+- SMTP account utilization
+- Campaign comparisons
+- Daily and monthly trends
+
+Clearly distinguish SMTP acceptance from actual inbox delivery. Do not claim inbox placement without independent delivery evidence.
+
+## 11. SQLite Database
+
+Use normalized SQLite tables:
+
+- users
+- smtp_accounts
+- smtp_groups
+- smtp_usage
+- campaigns
+- contacts
+- contact_lists
+- contact_list_members
+- email_templates
+- email_queue
+- email_attempts
+- delivery_events
+- suppressions
+- unsubscribe_tokens
+- audit_logs
+- app_settings
+
+Requirements:
+- Foreign keys enabled
+- Appropriate indexes
+- Prepared statements
+- Database transactions
+- UTC timestamps
+- Database migrations
+- Backup and restore support
+
+## 12. Security
+
+Implement:
+- Password hashing using password_hash()
+- CSRF protection
+- Session regeneration
+- Role-based access control
+- Input validation
+- Output escaping
+- SQL injection prevention
+- Rate limiting
+- Encrypted SMTP credentials
+- Secure file uploads
+- Secure unsubscribe tokens
+- Audit logging
+- .env configuration for application secrets
+
+Protect database files, configuration files, logs and uploaded files from public access.
+
+## 13. Project Structure
+
+/public
+    index.php
+    assets/
+        css/
+        js/
+        images/
+
+/app
+    Controllers/
+    Models/
+    Services/
+    Middleware/
+    Helpers/
+    Database/
+
+/config
+    app.php
+    database.php
+
+/storage
+    database/
+    logs/
+    backups/
+    uploads/
+
+/templates
+    layouts/
+    dashboard/
+    smtp/
+    campaigns/
+    contacts/
+    analytics/
+
+/routes
+    web.php
+    api.php
+
+/cron
+    email-worker.php
+    cleanup.php
+
+/vendor
+
+## 14. User Experience
+
+- Responsive sidebar
+- Mobile-friendly tables
+- Search and filters
+- Pagination
+- Bulk actions
+- Confirmation modals
+- Toast notifications
+- Loading indicators
+- Form validation
+- Helpful error messages
+- Accessible controls
+
+## 15. Development Instructions
+
+Build the project module by module.
+
+First deliver:
+1. Complete UI design system.
+2. Login page.
+3. Main dashboard.
+4. Sidebar and navigation.
+5. SMTP account management UI.
+6. SQLite schema and migration system.
+
+Then implement the backend APIs, SMTP integration, queue processing, campaign engine, analytics and security.
+
+Do not create fake functionality or hardcoded analytics. Every operational button must have a working backend action.
+
+Provide:
+- Complete source code
+- README.md
+- Installation instructions
+- Database initialization script
+- Cron configuration
+- Sample environment configuration
+- Deployment instructions for Apache/cPanel
+
+The final application should work on standard PHP hosting with SQLite and must not require Node.js at runtime.
+
+Important: Build a compliant email communication platform for opted-in subscribers and authorized transactional notifications. Never implement spam, unsolicited bulk sending, provider-limit evasion or SMTP identity rotation to bypass restrictions.
