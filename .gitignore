@@ -1,0 +1,9 @@
+vendor/
+.env
+storage/database/*.sqlite
+storage/database/*.sqlite-wal
+storage/database/*.sqlite-shm
+storage/logs/*.log
+storage/backups/*.sqlite
+storage/uploads/*
+!storage/uploads/.gitkeep
