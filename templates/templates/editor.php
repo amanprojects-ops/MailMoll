@@ -14,7 +14,7 @@ $defaultHtml = <<<'HTML'
         <div style="padding: 30px; color: #334155; line-height: 1.6; font-size: 15px;">
             <p style="margin-top: 0;">Hello <strong>{{first_name}} {{last_name}}</strong>,</p>
             <p>Thank you for subscribing to our updates. We're thrilled to have you onboard.</p>
-            <p>This is a customizable email template. You can edit this text directly in the Visual Design Editor or switch to HTML Source Code.</p>
+            <p>This is a customizable email template. You can edit this text directly in the Visual Rich-Text editor or switch to HTML Source Code.</p>
             <div style="margin: 30px 0; text-align: center;">
                 <a href="#" style="background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: 600; display: inline-block;">Explore Your Account</a>
             </div>
@@ -36,7 +36,7 @@ $currentHtml = !empty($template['body_html']) ? $template['body_html'] : old('bo
         <i class="bi bi-arrow-left me-1"></i> Back to Templates
     </a>
     <h4 class="fw-bold mt-2 mb-1"><?= $template ? 'Edit Template: ' . e($template['name']) : 'Create Email Template' ?></h4>
-    <p class="text-muted small">Design responsive email templates with live real-design preview and visual in-place editing.</p>
+    <p class="text-muted small">Design responsive email templates using Visual Rich-Text or raw HTML with separate real-time HTML preview.</p>
 </div>
 
 <form action="<?= $template ? url('/templates/update/' . $template['id']) : url('/templates/store') ?>" method="POST" id="templateForm">
@@ -46,7 +46,7 @@ $currentHtml = !empty($template['body_html']) ? $template['body_html'] : old('bo
     <div class="row g-4">
         <!-- Editor Controls & Settings -->
         <div class="col-lg-7">
-            <div class="card p-3 mb-3">
+            <div class="card p-3 mb-3 shadow-sm">
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Template Name *</label>
@@ -71,11 +71,11 @@ $currentHtml = !empty($template['body_html']) ? $template['body_html'] : old('bo
                     <button type="button" class="btn btn-sm btn-white border py-0 px-2" onmousedown="event.preventDefault()" onclick="insertPlaceholder('{{unsubscribe_url}}')">{{unsubscribe_url}}</button>
                 </div>
 
-                <!-- Editor Mode Tabs -->
+                <!-- Editor Mode Tabs Bar -->
                 <ul class="nav nav-tabs mb-0" id="editorModeTabs" role="tablist">
                     <li class="nav-item">
-                        <button type="button" class="nav-link active fw-semibold small" id="visual-tab" data-bs-toggle="tab" data-bs-target="#visual-pane" role="tab">
-                            <i class="bi bi-palette-fill me-1 text-primary"></i> Visual Design Editor
+                        <button type="button" class="nav-link active fw-semibold small" id="quill-tab" data-bs-toggle="tab" data-bs-target="#quill-pane" role="tab">
+                            <i class="bi bi-body-text me-1 text-primary"></i> Visual Rich-Text
                         </button>
                     </li>
                     <li class="nav-item">
@@ -83,72 +83,62 @@ $currentHtml = !empty($template['body_html']) ? $template['body_html'] : old('bo
                             <i class="bi bi-code-slash me-1 text-primary"></i> HTML Source Code
                         </button>
                     </li>
+                    <li class="nav-item">
+                        <button type="button" class="nav-link fw-semibold small" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview-pane" role="tab">
+                            <i class="bi bi-eye-fill me-1 text-primary"></i> HTML Preview
+                        </button>
+                    </li>
                 </ul>
 
                 <div class="tab-content border-start border-end border-bottom rounded-bottom" id="editorPanes">
-                    <!-- Visual Design Editor Mode -->
-                    <div class="tab-pane fade show active p-0" id="visual-pane" role="tabpanel">
-                        <!-- Rich Visual Toolbar -->
-                        <div class="p-2 bg-light border-bottom d-flex flex-wrap align-items-center gap-1">
-                            <select class="form-select form-select-sm d-inline-block w-auto" id="formatBlockSelect" onchange="execFormatBlock(this.value)">
-                                <option value="p">Paragraph</option>
-                                <option value="h1">Heading 1</option>
-                                <option value="h2">Heading 2</option>
-                                <option value="h3">Heading 3</option>
-                                <option value="h4">Heading 4</option>
-                            </select>
-
-                            <div class="vr mx-1"></div>
-
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCmd('bold')" title="Bold"><i class="bi bi-type-bold"></i></button>
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCmd('italic')" title="Italic"><i class="bi bi-type-italic"></i></button>
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCmd('underline')" title="Underline"><i class="bi bi-type-underline"></i></button>
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCmd('strikeThrough')" title="Strikethrough"><i class="bi bi-type-strikethrough"></i></button>
-
-                            <div class="vr mx-1"></div>
-
-                            <!-- Text Color -->
-                            <div class="d-inline-flex align-items-center position-relative">
-                                <label class="btn btn-sm btn-white border m-0 d-flex align-items-center gap-1" title="Text Color" style="cursor: pointer;" onmousedown="event.preventDefault()">
-                                    <i class="bi bi-palette text-primary"></i>
-                                    <input type="color" value="#334155" oninput="restoreSelection(); execCmd('foreColor', this.value)" style="opacity: 0; width: 0; height: 0; position: absolute; left: 0;">
-                                </label>
-                            </div>
-
-                            <!-- Highlight Color -->
-                            <div class="d-inline-flex align-items-center position-relative">
-                                <label class="btn btn-sm btn-white border m-0 d-flex align-items-center gap-1" title="Highlight Color" style="cursor: pointer;" onmousedown="event.preventDefault()">
-                                    <i class="bi bi-paint-bucket text-warning"></i>
-                                    <input type="color" value="#fef08a" oninput="restoreSelection(); execCmd('hiliteColor', this.value)" style="opacity: 0; width: 0; height: 0; position: absolute; left: 0;">
-                                </label>
-                            </div>
-
-                            <div class="vr mx-1"></div>
-
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCmd('justifyLeft')" title="Align Left"><i class="bi bi-text-left"></i></button>
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCmd('justifyCenter')" title="Align Center"><i class="bi bi-text-center"></i></button>
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCmd('justifyRight')" title="Align Right"><i class="bi bi-text-right"></i></button>
-
-                            <div class="vr mx-1"></div>
-
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCmd('insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCmd('insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
-
-                            <div class="vr mx-1"></div>
-
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="insertLinkPrompt()" title="Insert Link"><i class="bi bi-link-45deg"></i></button>
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCmd('unlink')" title="Remove Link"><i class="bi bi-link-45deg text-danger"></i></button>
-                            <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCmd('removeFormat')" title="Clear Formatting"><i class="bi bi-eraser"></i></button>
+                    <!-- Visual Rich-Text Mode (Quill) -->
+                    <div class="tab-pane fade show active p-0" id="quill-pane" role="tabpanel">
+                        <div id="quillToolbar" class="border-bottom bg-light">
+                            <span class="ql-formats">
+                                <select class="ql-header">
+                                    <option value="1">Heading 1</option>
+                                    <option value="2">Heading 2</option>
+                                    <option value="3">Heading 3</option>
+                                    <option selected>Normal</option>
+                                </select>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-bold"></button>
+                                <button class="ql-italic"></button>
+                                <button class="ql-underline"></button>
+                                <button class="ql-strike"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <select class="ql-color"></select>
+                                <select class="ql-background"></select>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-list" value="ordered"></button>
+                                <button class="ql-list" value="bullet"></button>
+                                <select class="ql-align"></select>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-link"></button>
+                                <button class="ql-clean"></button>
+                            </span>
                         </div>
-
-                        <!-- Visual Design Canvas (Direct in-place visual editing with Real Design preserved) -->
-                        <div id="visualEditorCanvas" contenteditable="true" style="min-height: 420px; max-height: 580px; overflow-y: auto; background: #f8fafc; padding: 20px; outline: none; border: 1px solid #e2e8f0;"></div>
-                    </div>
+                        <div id="quillTemplateEditor" style="height: 400px; font-size: 15px; background: #ffffff;"></div>
                     </div>
 
-                    <!-- HTML Source Mode -->
+                    <!-- HTML Source Mode (CodeMirror) -->
                     <div class="tab-pane fade p-0" id="codemirror-pane" role="tabpanel">
                         <textarea id="codeMirrorTextarea"><?= htmlspecialchars($currentHtml) ?></textarea>
+                    </div>
+
+                    <!-- Separate In-Tab HTML Preview -->
+                    <div class="tab-pane fade p-2 bg-light" id="preview-pane" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                            <span class="small fw-semibold text-muted"><i class="bi bi-display me-1 text-primary"></i> Full HTML Preview</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="updateLivePreview()">
+                                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                            </button>
+                        </div>
+                        <iframe id="tabPreviewIframe" class="w-100 bg-white border rounded shadow-sm" style="min-height: 420px;"></iframe>
                     </div>
                 </div>
 
@@ -161,12 +151,12 @@ $currentHtml = !empty($template['body_html']) ? $template['body_html'] : old('bo
             </div>
         </div>
 
-        <!-- Live Responsive Preview Pane -->
-        <div class="col-lg-5">
+        <!-- Separate HTML Preview Bar (Right Column) -->
+        <div class="col-lg-5" id="separatePreviewColumn">
             <div class="card h-100 shadow-sm">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
-                    <span class="fw-bold small text-muted">
-                        <i class="bi bi-display me-1 text-primary"></i> Real Design Preview
+                    <span class="fw-bold small text-dark">
+                        <i class="bi bi-display me-1 text-primary"></i> Separate HTML Preview
                     </span>
                     <div class="d-flex align-items-center gap-2">
                         <div class="btn-group btn-group-sm" role="group">
@@ -187,9 +177,19 @@ $currentHtml = !empty($template['body_html']) ? $template['body_html'] : old('bo
                         <?php endif; ?>
                     </div>
                 </div>
-                <div class="card-body p-2 d-flex justify-content-center align-items-stretch bg-light" style="overflow-x: auto; min-height: 560px;">
+                <div class="card-body p-2 d-flex justify-content-center align-items-stretch bg-light" style="overflow-x: auto; min-height: 520px;">
                     <div id="previewContainer" style="width: 100%; transition: width 0.3s ease;">
-                        <iframe id="previewIframe" class="w-100 h-100 border rounded shadow-sm bg-white" style="min-height: 540px;"></iframe>
+                        <iframe id="previewIframe" class="w-100 h-100 border rounded shadow-sm bg-white" style="min-height: 500px;"></iframe>
+                    </div>
+                </div>
+                <!-- Quick Test Email Sender -->
+                <div class="card-footer bg-white border-top p-2">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-muted"><i class="bi bi-send-check"></i></span>
+                        <input type="email" id="quickTestEmail" class="form-control" placeholder="Send test to: recipient@domain.com">
+                        <button type="button" class="btn btn-outline-primary" onclick="sendQuickTestEmail()">
+                            Send Test
+                        </button>
                     </div>
                 </div>
             </div>
@@ -199,21 +199,27 @@ $currentHtml = !empty($template['body_html']) ? $template['body_html'] : old('bo
 
 <style>
 .CodeMirror {
-    height: 460px;
+    height: 442px;
     font-family: 'Fira Code', 'Consolas', monospace;
     font-size: 13px;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
 }
-#visualEditorCanvas:focus {
-    box-shadow: inset 0 0 0 2px #6366f1;
+.ql-toolbar.ql-snow {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-color: #dee2e6;
+}
+.ql-container.ql-snow {
+    border: none;
 }
 </style>
 
 <script>
 let cmEditor;
+let quillEditor;
 let activeMode = 'visual';
-let savedSelectionRange = null;
 
 // Document wrapper state for full HTML emails
 let docWrapper = {
@@ -223,7 +229,23 @@ let docWrapper = {
 };
 
 function parseHtmlForVisual(raw) {
-    if (raw && raw.includes('<body') && raw.includes('</body>')) {
+    if (!raw) return '';
+
+    // 1. Check if email has standard container structure (padding container inside card)
+    const paddingMatch = raw.match(/<div[^>]*style="[^"]*padding:\s*30px[^"]*"[^>]*>/i);
+    if (paddingMatch) {
+        const startIdx = raw.indexOf(paddingMatch[0]) + paddingMatch[0].length;
+        const endIdx = raw.lastIndexOf('</div>');
+        if (startIdx < endIdx) {
+            docWrapper.hasWrapper = true;
+            docWrapper.prefix = raw.substring(0, startIdx);
+            docWrapper.suffix = raw.substring(endIdx);
+            return raw.substring(startIdx, endIdx).trim();
+        }
+    }
+
+    // 2. Fallback: check for <body>...</body>
+    if (raw.includes('<body') && raw.includes('</body>')) {
         const bodyMatch = raw.match(/<body[^>]*>/i);
         if (bodyMatch) {
             const startIdx = raw.indexOf(bodyMatch[0]) + bodyMatch[0].length;
@@ -234,10 +256,11 @@ function parseHtmlForVisual(raw) {
             return raw.substring(startIdx, endIdx).trim();
         }
     }
+
     docWrapper.hasWrapper = false;
     docWrapper.prefix = '';
     docWrapper.suffix = '';
-    return raw || '';
+    return raw;
 }
 
 function assembleFullHtml(content) {
@@ -247,45 +270,28 @@ function assembleFullHtml(content) {
     return content;
 }
 
-function saveCurrentSelection() {
-    const sel = window.getSelection();
-    if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        const canvas = document.getElementById('visualEditorCanvas');
-        if (canvas && canvas.contains(range.commonAncestorContainer)) {
-            savedSelectionRange = range;
-        }
-    }
-}
-
-function restoreSelection() {
-    if (savedSelectionRange) {
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(savedSelectionRange);
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     const rawInitial = document.getElementById('codeMirrorTextarea').value;
-    const visualCanvas = document.getElementById('visualEditorCanvas');
 
-    // 1. Initialize Visual Design Canvas with the exact real design
-    const visualContent = parseHtmlForVisual(rawInitial);
-    visualCanvas.innerHTML = visualContent;
-
-    // Prevent clicking links inside the visual canvas from navigating away
-    visualCanvas.addEventListener('click', function(e) {
-        if (e.target.tagName === 'A' || e.target.closest('a')) {
-            e.preventDefault();
-        }
-        saveCurrentSelection();
+    // 1. Initialize Quill (Visual Rich-Text Editor)
+    quillEditor = new Quill('#quillTemplateEditor', {
+        modules: {
+            toolbar: '#quillToolbar'
+        },
+        theme: 'snow',
+        placeholder: 'Compose your email content visually...'
     });
 
-    visualCanvas.addEventListener('keyup', saveCurrentSelection);
-    visualCanvas.addEventListener('mouseup', saveCurrentSelection);
+    const visualContent = parseHtmlForVisual(rawInitial);
+    if (visualContent) {
+        if (quillEditor.clipboard && typeof quillEditor.clipboard.dangerouslyPasteHTML === 'function') {
+            quillEditor.clipboard.dangerouslyPasteHTML(visualContent);
+        } else {
+            quillEditor.root.innerHTML = visualContent;
+        }
+    }
 
-    // 2. Initialize CodeMirror for HTML Source Code
+    // 2. Initialize CodeMirror (HTML Source Code)
     const textarea = document.getElementById('codeMirrorTextarea');
     cmEditor = CodeMirror.fromTextArea(textarea, {
         mode: 'htmlmixed',
@@ -296,26 +302,36 @@ document.addEventListener('DOMContentLoaded', function() {
     cmEditor.setValue(rawInitial);
 
     // 3. Tab Switching Handlers
-    const visualTab = document.getElementById('visual-tab');
+    const quillTab = document.getElementById('quill-tab');
     const codemirrorTab = document.getElementById('codemirror-tab');
+    const previewTab = document.getElementById('preview-tab');
 
-    visualTab.addEventListener('shown.bs.tab', function() {
+    quillTab.addEventListener('shown.bs.tab', function() {
         activeMode = 'visual';
         const rawCode = cmEditor.getValue();
-        visualCanvas.innerHTML = parseHtmlForVisual(rawCode);
+        const extracted = parseHtmlForVisual(rawCode);
+        if (quillEditor.clipboard && typeof quillEditor.clipboard.dangerouslyPasteHTML === 'function') {
+            quillEditor.clipboard.dangerouslyPasteHTML(extracted);
+        } else {
+            quillEditor.root.innerHTML = extracted;
+        }
         updateLivePreview();
     });
 
     codemirrorTab.addEventListener('shown.bs.tab', function() {
         activeMode = 'code';
-        const fullHtml = assembleFullHtml(visualCanvas.innerHTML);
+        const fullHtml = assembleFullHtml(quillEditor.root.innerHTML);
         cmEditor.setValue(fullHtml);
         cmEditor.refresh();
         updateLivePreview();
     });
 
-    // 4. Real-time updates
-    visualCanvas.addEventListener('input', function() {
+    previewTab.addEventListener('shown.bs.tab', function() {
+        updateLivePreview();
+    });
+
+    // 4. Real-time updates for Separate HTML Preview Bar
+    quillEditor.on('text-change', function() {
         if (activeMode === 'visual') {
             updateLivePreview();
         }
@@ -334,14 +350,14 @@ document.addEventListener('DOMContentLoaded', function() {
             let finalHtml = '';
             if (activeMode === 'code' && cmEditor) {
                 finalHtml = cmEditor.getValue();
-            } else {
-                finalHtml = assembleFullHtml(visualCanvas ? visualCanvas.innerHTML : '');
+            } else if (quillEditor) {
+                finalHtml = assembleFullHtml(quillEditor.root.innerHTML);
             }
             document.getElementById('hidden_body_html').value = finalHtml;
         });
     }
 
-    // 6. Desktop / Mobile Responsive Toggle
+    // 6. Responsive Preview Controls (Desktop / Mobile)
     const btnDesktop = document.getElementById('btnPreviewDesktop');
     const btnMobile = document.getElementById('btnPreviewMobile');
     const previewContainer = document.getElementById('previewContainer');
@@ -358,54 +374,31 @@ document.addEventListener('DOMContentLoaded', function() {
         previewContainer.style.width = '375px';
     });
 
-    // Initial Live Preview Render
+    // Initial Live Preview
     updateLivePreview();
 });
 
-// Formatting command helper for Visual Editor
-function execCmd(command, value = null) {
-    const canvas = document.getElementById('visualEditorCanvas');
-    canvas.focus();
-    restoreSelection();
-    document.execCommand(command, false, value);
-    saveCurrentSelection();
-    updateLivePreview();
-}
-
-function execFormatBlock(tag) {
-    execCmd('formatBlock', '<' + tag + '>');
-}
-
-function insertLinkPrompt() {
-    const url = prompt('Enter destination URL:', 'https://');
-    if (url) {
-        execCmd('createLink', url);
-    }
-}
-
 function insertPlaceholder(tag) {
-    if (activeMode === 'code') {
+    if (activeMode === 'code' && cmEditor) {
         const doc = cmEditor.getDoc();
         const cursor = doc.getCursor();
         doc.replaceRange(tag, cursor);
-    } else {
-        const canvas = document.getElementById('visualEditorCanvas');
-        canvas.focus();
-        restoreSelection();
-        document.execCommand('insertText', false, tag);
-        saveCurrentSelection();
+    } else if (quillEditor) {
+        const range = quillEditor.getSelection(true) || { index: quillEditor.getLength(), length: 0 };
+        quillEditor.insertText(range.index, tag);
     }
     updateLivePreview();
 }
 
-// Renders the REAL DESIGN into the preview iframe
+// Renders the REAL DESIGN into the separate preview bar
 function updateLivePreview() {
     let fullHtml = '';
     if (activeMode === 'code' && cmEditor) {
         fullHtml = cmEditor.getValue();
+    } else if (quillEditor) {
+        fullHtml = assembleFullHtml(quillEditor.root.innerHTML);
     } else {
-        const canvas = document.getElementById('visualEditorCanvas');
-        fullHtml = assembleFullHtml(canvas ? canvas.innerHTML : '');
+        fullHtml = document.getElementById('codeMirrorTextarea')?.value || '';
     }
 
     // Replace merge tags with realistic preview values
@@ -428,15 +421,67 @@ function updateLivePreview() {
     if (iframe) {
         iframe.srcdoc = rendered;
     }
+
+    const tabIframe = document.getElementById('tabPreviewIframe');
+    if (tabIframe) {
+        tabIframe.srcdoc = rendered;
+    }
+}
+
+function sendQuickTestEmail() {
+    const email = document.getElementById('quickTestEmail').value.trim();
+    if (!email) {
+        Swal.fire('Input Required', 'Please enter a recipient email address.', 'warning');
+        return;
+    }
+
+    let fullHtml = activeMode === 'code' && cmEditor 
+        ? cmEditor.getValue() 
+        : assembleFullHtml(quillEditor ? quillEditor.root.innerHTML : '');
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const subject = document.querySelector('input[name="subject_default"]')?.value || 'Test Template';
+
+    Swal.fire({
+        title: 'Sending Test Email...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    fetch(window.MAILMOLL_URL + '/api/campaigns/test-send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRF-Token': csrfToken
+        },
+        body: new URLSearchParams({
+            '_csrf_token': csrfToken,
+            'test_email': email,
+            'subject': subject,
+            'body_html': fullHtml
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('Sent!', data.message, 'success');
+        } else {
+            Swal.fire('Failed', data.message, 'error');
+        }
+    })
+    .catch(err => {
+        Swal.fire('Error', err.message, 'error');
+    });
 }
 
 function saveTemplate() {
     let finalHtml = '';
     if (activeMode === 'code' && cmEditor) {
         finalHtml = cmEditor.getValue();
+    } else if (quillEditor) {
+        finalHtml = assembleFullHtml(quillEditor.root.innerHTML);
     } else {
-        const canvas = document.getElementById('visualEditorCanvas');
-        finalHtml = assembleFullHtml(canvas ? canvas.innerHTML : '');
+        finalHtml = document.getElementById('codeMirrorTextarea')?.value || '';
     }
 
     document.getElementById('hidden_body_html').value = finalHtml;
