@@ -176,7 +176,7 @@
 
             <!-- Merge tags helper toolbar -->
             <div class="mb-2 d-flex flex-wrap align-items-center gap-1">
-                <span class="small fw-semibold text-muted me-2">Click to insert tag:</span>
+                <span class="small fw-semibold text-muted me-2"><i class="bi bi-tags-fill me-1 text-primary"></i> Click to insert tag:</span>
                 <button type="button" class="btn btn-light btn-sm border py-0 px-2" onclick="insertTag('{{first_name}}')">{{first_name}}</button>
                 <button type="button" class="btn btn-light btn-sm border py-0 px-2" onclick="insertTag('{{last_name}}')">{{last_name}}</button>
                 <button type="button" class="btn btn-light btn-sm border py-0 px-2" onclick="insertTag('{{email}}')">{{email}}</button>
@@ -184,7 +184,7 @@
             </div>
 
             <div class="mb-3">
-                <div id="quillEditor" style="height: 300px; background: #fff;"></div>
+                <div id="quillEditor" style="height: 320px; font-size: 15px; background: #ffffff;"></div>
             </div>
 
             <div class="d-flex justify-content-between mt-4">
@@ -290,10 +290,51 @@
 let currentStep = 1;
 let quill;
 
+let campaignDocWrapper = {
+    hasWrapper: false,
+    prefix: '',
+    suffix: ''
+};
+
+function parseCampaignHtmlForVisual(raw) {
+    if (raw && raw.includes('<body') && raw.includes('</body>')) {
+        const bodyMatch = raw.match(/<body[^>]*>/i);
+        if (bodyMatch) {
+            const startIdx = raw.indexOf(bodyMatch[0]) + bodyMatch[0].length;
+            const endIdx = raw.lastIndexOf('</body>');
+            campaignDocWrapper.hasWrapper = true;
+            campaignDocWrapper.prefix = raw.substring(0, startIdx);
+            campaignDocWrapper.suffix = raw.substring(endIdx);
+            return raw.substring(startIdx, endIdx).trim();
+        }
+    }
+    campaignDocWrapper.hasWrapper = false;
+    campaignDocWrapper.prefix = '';
+    campaignDocWrapper.suffix = '';
+    return raw || '';
+}
+
+function assembleCampaignFullHtml(content) {
+    if (campaignDocWrapper.hasWrapper && campaignDocWrapper.prefix) {
+        return campaignDocWrapper.prefix + "\n" + content + "\n" + campaignDocWrapper.suffix;
+    }
+    return content;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     quill = new Quill('#quillEditor', {
         theme: 'snow',
-        placeholder: 'Compose your email message here...'
+        placeholder: 'Compose your email message here...',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'align': [] }],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link', 'clean']
+            ]
+        }
     });
 
     // Handle test send button
@@ -305,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const subject = document.getElementById('camp_subject').value || 'Test Campaign';
-        const html = quill.root.innerHTML;
+        const html = assembleCampaignFullHtml(quill.root.innerHTML);
         const smtpId = document.getElementById('camp_smtp_account_id')?.value || 0;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -370,6 +411,14 @@ function goToStep(step) {
     document.getElementById('step-' + currentStep).classList.remove('d-none');
     document.getElementById('step-nav-' + currentStep)?.classList.add('active');
 
+    if (currentStep === 4) {
+        setTimeout(() => {
+            if (quill) {
+                quill.update();
+            }
+        }, 50);
+    }
+
     if (currentStep === 6) {
         populateReview();
     }
@@ -396,7 +445,7 @@ function toggleScheduleDate(show) {
 }
 
 function insertTag(tag) {
-    const range = quill.getSelection(true);
+    const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
     quill.insertText(range.index, tag);
 }
 
@@ -404,7 +453,12 @@ function loadSelectedTemplate() {
     const select = document.getElementById('templateLoaderSelect');
     const option = select.options[select.selectedIndex];
     if (option && option.dataset.html) {
-        quill.root.innerHTML = option.dataset.html;
+        const visualContent = parseCampaignHtmlForVisual(option.dataset.html);
+        if (quill.clipboard && typeof quill.clipboard.dangerouslyPasteHTML === 'function') {
+            quill.clipboard.dangerouslyPasteHTML(visualContent);
+        } else {
+            quill.root.innerHTML = visualContent;
+        }
         if (option.dataset.subject && !document.getElementById('camp_subject').value) {
             document.getElementById('camp_subject').value = option.dataset.subject;
         }
@@ -426,7 +480,8 @@ function populateReview() {
 }
 
 function submitWizard(launchNow) {
-    document.getElementById('hidden_body_html').value = quill.root.innerHTML;
+    const finalHtml = assembleCampaignFullHtml(quill.root.innerHTML);
+    document.getElementById('hidden_body_html').value = finalHtml;
     document.getElementById('hidden_launch_immediately').value = launchNow ? '1' : '0';
     document.getElementById('campaignWizardForm').submit();
 }
