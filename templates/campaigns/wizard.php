@@ -162,29 +162,112 @@
         <div class="wizard-step-content d-none" id="step-4">
             <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square text-primary me-2"></i> Step 4: Email Content & Placeholders</h5>
 
-            <div class="mb-3">
-                <label class="form-label small fw-semibold">Load From Existing Template</label>
-                <select id="templateLoaderSelect" class="form-select" onchange="loadSelectedTemplate()">
-                    <option value="">-- Choose a reusable template --</option>
-                    <?php foreach ($templates as $tpl): ?>
-                        <option value="<?= $tpl['id'] ?>" data-html="<?= htmlspecialchars($tpl['body_html']) ?>" data-subject="<?= htmlspecialchars($tpl['subject_default'] ?? '') ?>">
-                            <?= e($tpl['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label class="form-label small fw-semibold">Load From Existing Template</label>
+                    <select id="templateLoaderSelect" class="form-select" onchange="loadSelectedTemplate()">
+                        <option value="">-- Choose a reusable template or compose custom --</option>
+                        <?php foreach ($templates as $tpl): ?>
+                            <option value="<?= $tpl['id'] ?>" data-html="<?= htmlspecialchars($tpl['body_html']) ?>" data-subject="<?= htmlspecialchars($tpl['subject_default'] ?? '') ?>">
+                                <?= e($tpl['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="previewCurrentStep4Email()">
+                        <i class="bi bi-eye me-1"></i> Quick Preview in Modal
+                    </button>
+                </div>
             </div>
 
             <!-- Merge tags helper toolbar -->
-            <div class="mb-2 d-flex flex-wrap align-items-center gap-1">
-                <span class="small fw-semibold text-muted me-2"><i class="bi bi-tags-fill me-1 text-primary"></i> Click to insert tag:</span>
-                <button type="button" class="btn btn-light btn-sm border py-0 px-2" onclick="insertTag('{{first_name}}')">{{first_name}}</button>
-                <button type="button" class="btn btn-light btn-sm border py-0 px-2" onclick="insertTag('{{last_name}}')">{{last_name}}</button>
-                <button type="button" class="btn btn-light btn-sm border py-0 px-2" onclick="insertTag('{{email}}')">{{email}}</button>
-                <button type="button" class="btn btn-light btn-sm border py-0 px-2" onclick="insertTag('{{unsubscribe_url}}')">{{unsubscribe_url}}</button>
+            <div class="mb-2 d-flex flex-wrap align-items-center gap-1 p-2 bg-light rounded">
+                <span class="small fw-semibold text-muted me-2"><i class="bi bi-tags-fill me-1 text-primary"></i> Merge Tags:</span>
+                <button type="button" class="btn btn-white btn-sm border py-0 px-2" onmousedown="event.preventDefault()" onclick="insertTag('{{first_name}}')">{{first_name}}</button>
+                <button type="button" class="btn btn-white btn-sm border py-0 px-2" onmousedown="event.preventDefault()" onclick="insertTag('{{last_name}}')">{{last_name}}</button>
+                <button type="button" class="btn btn-white btn-sm border py-0 px-2" onmousedown="event.preventDefault()" onclick="insertTag('{{email}}')">{{email}}</button>
+                <button type="button" class="btn btn-white btn-sm border py-0 px-2" onmousedown="event.preventDefault()" onclick="insertTag('{{unsubscribe_url}}')">{{unsubscribe_url}}</button>
             </div>
 
-            <div class="mb-3">
-                <div id="quillEditor" style="height: 320px; font-size: 15px; background: #ffffff;"></div>
+            <!-- Editor Mode Tabs -->
+            <ul class="nav nav-tabs mb-0" id="campaignEditorTabs" role="tablist">
+                <li class="nav-item">
+                    <button type="button" class="nav-link active fw-semibold small" id="camp-visual-tab" data-bs-toggle="tab" data-bs-target="#camp-visual-pane" role="tab">
+                        <i class="bi bi-palette-fill me-1 text-primary"></i> Visual Design Editor
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link fw-semibold small" id="camp-code-tab" data-bs-toggle="tab" data-bs-target="#camp-code-pane" role="tab">
+                        <i class="bi bi-code-slash me-1 text-primary"></i> HTML Source Code
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content border-start border-end border-bottom rounded-bottom mb-3" id="campEditorPanes">
+                <!-- Visual Design Editor Mode -->
+                <div class="tab-pane fade show active p-0" id="camp-visual-pane" role="tabpanel">
+                    <!-- Rich Visual Toolbar -->
+                    <div class="p-2 bg-light border-bottom d-flex flex-wrap align-items-center gap-1">
+                        <select class="form-select form-select-sm d-inline-block w-auto" id="campFormatBlockSelect" onchange="execCampFormatBlock(this.value)">
+                            <option value="p">Paragraph</option>
+                            <option value="h1">Heading 1</option>
+                            <option value="h2">Heading 2</option>
+                            <option value="h3">Heading 3</option>
+                            <option value="h4">Heading 4</option>
+                        </select>
+
+                        <div class="vr mx-1"></div>
+
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCampCmd('bold')" title="Bold"><i class="bi bi-type-bold"></i></button>
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCampCmd('italic')" title="Italic"><i class="bi bi-type-italic"></i></button>
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCampCmd('underline')" title="Underline"><i class="bi bi-type-underline"></i></button>
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCampCmd('strikeThrough')" title="Strikethrough"><i class="bi bi-type-strikethrough"></i></button>
+
+                        <div class="vr mx-1"></div>
+
+                        <!-- Text Color -->
+                        <div class="d-inline-flex align-items-center position-relative">
+                            <label class="btn btn-sm btn-white border m-0 d-flex align-items-center gap-1" title="Text Color" style="cursor: pointer;" onmousedown="event.preventDefault()">
+                                <i class="bi bi-palette text-primary"></i>
+                                <input type="color" value="#334155" oninput="restoreCampSelection(); execCampCmd('foreColor', this.value)" style="opacity: 0; width: 0; height: 0; position: absolute; left: 0;">
+                            </label>
+                        </div>
+
+                        <!-- Highlight Color -->
+                        <div class="d-inline-flex align-items-center position-relative">
+                            <label class="btn btn-sm btn-white border m-0 d-flex align-items-center gap-1" title="Highlight Color" style="cursor: pointer;" onmousedown="event.preventDefault()">
+                                <i class="bi bi-paint-bucket text-warning"></i>
+                                <input type="color" value="#fef08a" oninput="restoreCampSelection(); execCampCmd('hiliteColor', this.value)" style="opacity: 0; width: 0; height: 0; position: absolute; left: 0;">
+                            </label>
+                        </div>
+
+                        <div class="vr mx-1"></div>
+
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCampCmd('justifyLeft')" title="Align Left"><i class="bi bi-text-left"></i></button>
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCampCmd('justifyCenter')" title="Align Center"><i class="bi bi-text-center"></i></button>
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCampCmd('justifyRight')" title="Align Right"><i class="bi bi-text-right"></i></button>
+
+                        <div class="vr mx-1"></div>
+
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCampCmd('insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCampCmd('insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
+
+                        <div class="vr mx-1"></div>
+
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="insertCampLinkPrompt()" title="Insert Link"><i class="bi bi-link-45deg"></i></button>
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCampCmd('unlink')" title="Remove Link"><i class="bi bi-link-45deg text-danger"></i></button>
+                        <button type="button" class="btn btn-sm btn-white border" onmousedown="event.preventDefault()" onclick="execCampCmd('removeFormat')" title="Clear Formatting"><i class="bi bi-eraser"></i></button>
+                    </div>
+
+                    <!-- Visual Design Canvas -->
+                    <div id="campaignVisualCanvas" contenteditable="true" style="min-height: 340px; max-height: 480px; overflow-y: auto; background: #f8fafc; padding: 20px; outline: none; border: 1px solid #e2e8f0;"></div>
+                </div>
+
+                <!-- HTML Source Mode -->
+                <div class="tab-pane fade p-0" id="camp-code-pane" role="tabpanel">
+                    <textarea id="campaignCodeMirrorTextarea"></textarea>
+                </div>
             </div>
 
             <div class="d-flex justify-content-between mt-4">
@@ -257,6 +340,17 @@
                 </div>
             </div>
 
+            <!-- Email Real Design Preview in Step 6 -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-display text-primary me-1"></i> Real Design Preview</h6>
+                    <span class="text-muted small">Rendered with personalized sample data</span>
+                </div>
+                <div class="border rounded bg-light p-2">
+                    <iframe id="wizardReviewIframe" class="w-100 bg-white rounded border" style="height: 360px;"></iframe>
+                </div>
+            </div>
+
             <!-- Test Email Dispatcher Before Launch -->
             <div class="border p-3 rounded mb-4">
                 <h6 class="fw-bold mb-2"><i class="bi bi-send-check text-success me-1"></i> Send a Test Email First</h6>
@@ -286,9 +380,26 @@
     </div>
 </form>
 
+<!-- Quick Preview Modal for Step 4 -->
+<div class="modal fade" id="quickPreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title fw-bold"><i class="bi bi-display text-primary me-2"></i> Real Design Preview</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-2 bg-light">
+                <iframe id="quickPreviewIframe" class="w-100 bg-white rounded border" style="height: 480px;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentStep = 1;
-let quill;
+let cmCampaignEditor;
+let campActiveMode = 'visual';
+let campSavedSelectionRange = null;
 
 let campaignDocWrapper = {
     hasWrapper: false,
@@ -321,21 +432,148 @@ function assembleCampaignFullHtml(content) {
     return content;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    quill = new Quill('#quillEditor', {
-        theme: 'snow',
-        placeholder: 'Compose your email message here...',
-        modules: {
-            toolbar: [
-                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'color': [] }, { 'background': [] }],
-                [{ 'align': [] }],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                ['link', 'clean']
-            ]
+function getCampaignFinalHtml() {
+    if (campActiveMode === 'code' && cmCampaignEditor) {
+        return cmCampaignEditor.getValue();
+    }
+    const canvas = document.getElementById('campaignVisualCanvas');
+    return assembleCampaignFullHtml(canvas ? canvas.innerHTML : '');
+}
+
+function saveCampSelection() {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        const canvas = document.getElementById('campaignVisualCanvas');
+        if (canvas && canvas.contains(range.commonAncestorContainer)) {
+            campSavedSelectionRange = range;
         }
-    });
+    }
+}
+
+function restoreCampSelection() {
+    if (campSavedSelectionRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(campSavedSelectionRange);
+    }
+}
+
+function execCampCmd(command, value = null) {
+    const canvas = document.getElementById('campaignVisualCanvas');
+    canvas.focus();
+    restoreCampSelection();
+    document.execCommand(command, false, value);
+    saveCampSelection();
+}
+
+function execCampFormatBlock(tag) {
+    execCampCmd('formatBlock', '<' + tag + '>');
+}
+
+function insertCampLinkPrompt() {
+    const url = prompt('Enter destination URL:', 'https://');
+    if (url) {
+        execCampCmd('createLink', url);
+    }
+}
+
+function insertTag(tag) {
+    if (campActiveMode === 'code' && cmCampaignEditor) {
+        const doc = cmCampaignEditor.getDoc();
+        const cursor = doc.getCursor();
+        doc.replaceRange(tag, cursor);
+    } else {
+        const canvas = document.getElementById('campaignVisualCanvas');
+        canvas.focus();
+        restoreCampSelection();
+        document.execCommand('insertText', false, tag);
+        saveCampSelection();
+    }
+}
+
+function loadSelectedTemplate() {
+    const select = document.getElementById('templateLoaderSelect');
+    const option = select.options[select.selectedIndex];
+    if (option && option.dataset.html) {
+        const rawHtml = option.dataset.html;
+        const visualContent = parseCampaignHtmlForVisual(rawHtml);
+        const canvas = document.getElementById('campaignVisualCanvas');
+        if (canvas) {
+            canvas.innerHTML = visualContent;
+        }
+        if (cmCampaignEditor) {
+            cmCampaignEditor.setValue(rawHtml);
+        }
+        if (option.dataset.subject && !document.getElementById('camp_subject').value) {
+            document.getElementById('camp_subject').value = option.dataset.subject;
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const visualCanvas = document.getElementById('campaignVisualCanvas');
+    const textarea = document.getElementById('campaignCodeMirrorTextarea');
+
+    // Default template or sample content if empty
+    const initialHtml = `<p>Hello <strong>{{first_name}}</strong>,</p><p>We are excited to share our latest news with you. Here is your personalized update.</p><p>Best regards,<br>MailMoll Team</p>`;
+    if (visualCanvas) {
+        visualCanvas.innerHTML = initialHtml;
+    }
+
+    if (textarea) {
+        cmCampaignEditor = CodeMirror.fromTextArea(textarea, {
+            mode: 'htmlmixed',
+            theme: 'dracula',
+            lineNumbers: true,
+            lineWrapping: true
+        });
+        cmCampaignEditor.setValue(initialHtml);
+    }
+
+    // Tab Switching
+    const visualTab = document.getElementById('camp-visual-tab');
+    const codemirrorTab = document.getElementById('camp-code-tab');
+
+    if (visualTab) {
+        visualTab.addEventListener('shown.bs.tab', function() {
+            campActiveMode = 'visual';
+            if (cmCampaignEditor) {
+                const rawCode = cmCampaignEditor.getValue();
+                visualCanvas.innerHTML = parseCampaignHtmlForVisual(rawCode);
+            }
+        });
+    }
+
+    if (codemirrorTab) {
+        codemirrorTab.addEventListener('shown.bs.tab', function() {
+            campActiveMode = 'code';
+            const fullHtml = assembleCampaignFullHtml(visualCanvas.innerHTML);
+            if (cmCampaignEditor) {
+                cmCampaignEditor.setValue(fullHtml);
+                cmCampaignEditor.refresh();
+            }
+        });
+    }
+
+    if (visualCanvas) {
+        visualCanvas.addEventListener('keyup', saveCampSelection);
+        visualCanvas.addEventListener('mouseup', saveCampSelection);
+        visualCanvas.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' || e.target.closest('a')) {
+                e.preventDefault();
+            }
+            saveCampSelection();
+        });
+    }
+
+    // Form submission safeguard
+    const form = document.getElementById('campaignWizardForm');
+    if (form) {
+        form.addEventListener('submit', function() {
+            document.getElementById('hidden_body_html').value = getCampaignFinalHtml();
+        });
+    }
 
     // Handle test send button
     document.getElementById('btnSendTest').addEventListener('click', function() {
@@ -346,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const subject = document.getElementById('camp_subject').value || 'Test Campaign';
-        const html = assembleCampaignFullHtml(quill.root.innerHTML);
+        const html = getCampaignFinalHtml();
         const smtpId = document.getElementById('camp_smtp_account_id')?.value || 0;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -384,6 +622,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+function previewCurrentStep4Email() {
+    let html = getCampaignFinalHtml()
+        .replace(/\{\{first_name\}\}/g, 'Sarah')
+        .replace(/\{\{last_name\}\}/g, 'Connor')
+        .replace(/\{\{email\}\}/g, 'sarah.connor@cyberdyne.org')
+        .replace(/\{\{unsubscribe_url\}\}/g, '#preview-unsub');
+
+    if (!html.toLowerCase().includes('<html')) {
+        html = `<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_blank"><style>body{margin:0;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background-color:#f8fafc;}</style></head><body>${html}</body></html>`;
+    } else if (html.includes('<head>')) {
+        html = html.replace('<head>', '<head><base target="_blank">');
+    } else {
+        html = '<base target="_blank">' + html;
+    }
+
+    const iframe = document.getElementById('quickPreviewIframe');
+    if (iframe) {
+        iframe.srcdoc = html;
+    }
+    const modal = new bootstrap.Modal(document.getElementById('quickPreviewModal'));
+    modal.show();
+}
+
 function goToStep(step) {
     if (step > currentStep) {
         // Validate current step
@@ -411,14 +672,6 @@ function goToStep(step) {
     document.getElementById('step-' + currentStep).classList.remove('d-none');
     document.getElementById('step-nav-' + currentStep)?.classList.add('active');
 
-    if (currentStep === 4) {
-        setTimeout(() => {
-            if (quill) {
-                quill.update();
-            }
-        }, 50);
-    }
-
     if (currentStep === 6) {
         populateReview();
     }
@@ -444,27 +697,6 @@ function toggleScheduleDate(show) {
     }
 }
 
-function insertTag(tag) {
-    const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
-    quill.insertText(range.index, tag);
-}
-
-function loadSelectedTemplate() {
-    const select = document.getElementById('templateLoaderSelect');
-    const option = select.options[select.selectedIndex];
-    if (option && option.dataset.html) {
-        const visualContent = parseCampaignHtmlForVisual(option.dataset.html);
-        if (quill.clipboard && typeof quill.clipboard.dangerouslyPasteHTML === 'function') {
-            quill.clipboard.dangerouslyPasteHTML(visualContent);
-        } else {
-            quill.root.innerHTML = visualContent;
-        }
-        if (option.dataset.subject && !document.getElementById('camp_subject').value) {
-            document.getElementById('camp_subject').value = option.dataset.subject;
-        }
-    }
-}
-
 function populateReview() {
     document.getElementById('rev_title').textContent = document.getElementById('camp_title').value;
     document.getElementById('rev_subject').textContent = document.getElementById('camp_subject').value;
@@ -477,10 +709,29 @@ function populateReview() {
     } else {
         document.getElementById('rev_schedule').textContent = 'Immediate Queue & Dispatch';
     }
+
+    let reviewHtml = getCampaignFinalHtml()
+        .replace(/\{\{first_name\}\}/g, 'Sarah')
+        .replace(/\{\{last_name\}\}/g, 'Connor')
+        .replace(/\{\{email\}\}/g, 'sarah.connor@cyberdyne.org')
+        .replace(/\{\{unsubscribe_url\}\}/g, '#preview-unsub');
+
+    if (!reviewHtml.toLowerCase().includes('<html')) {
+        reviewHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_blank"><style>body{margin:0;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background-color:#f8fafc;}</style></head><body>${reviewHtml}</body></html>`;
+    } else if (reviewHtml.includes('<head>')) {
+        reviewHtml = reviewHtml.replace('<head>', '<head><base target="_blank">');
+    } else {
+        reviewHtml = '<base target="_blank">' + reviewHtml;
+    }
+
+    const reviewFrame = document.getElementById('wizardReviewIframe');
+    if (reviewFrame) {
+        reviewFrame.srcdoc = reviewHtml;
+    }
 }
 
 function submitWizard(launchNow) {
-    const finalHtml = assembleCampaignFullHtml(quill.root.innerHTML);
+    const finalHtml = getCampaignFinalHtml();
     document.getElementById('hidden_body_html').value = finalHtml;
     document.getElementById('hidden_launch_immediately').value = launchNow ? '1' : '0';
     document.getElementById('campaignWizardForm').submit();
