@@ -114,7 +114,10 @@ Router::group(['middleware' => [AuthMiddleware::class]], function () {
     Router::get('/queue', [QueueController::class, 'index']);
     Router::post('/queue/retry/{id}', [QueueController::class, 'retry'], [CsrfMiddleware::class]);
     Router::post('/queue/cancel/{id}', [QueueController::class, 'cancel'], [CsrfMiddleware::class]);
+    Router::get('/queue/clear-failed', [QueueController::class, 'clearFailed']);
     Router::post('/queue/clear-failed', [QueueController::class, 'clearFailed'], [CsrfMiddleware::class]);
+    Router::post('/queue/reset-stuck', [QueueController::class, 'resetStuck'], [CsrfMiddleware::class]);
+    Router::post('/queue/purge-all', [QueueController::class, 'purgeAll'], [CsrfMiddleware::class]);
 
     // Logs & Deliveries
     Router::get('/logs/delivery', [LogController::class, 'deliveryLogs']);
