@@ -8,9 +8,21 @@
         <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newListModal">
             <i class="bi bi-folder-plus me-1"></i> New List
         </button>
-        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
-            <i class="bi bi-file-earmark-arrow-up me-1"></i> Import Contacts
-        </button>
+        <div class="btn-group">
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+                <i class="bi bi-file-earmark-arrow-up me-1"></i> Import Contacts
+            </button>
+            <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" title="Download Sample Templates">
+                <span class="visually-hidden">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm small">
+                <li><h6 class="dropdown-header small text-uppercase fw-bold text-muted"><i class="bi bi-download me-1"></i> Sample Templates</h6></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="<?= url('/contacts/sample/csv') ?>"><i class="bi bi-filetype-csv text-success fs-6"></i> CSV Template (.csv)</a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="<?= url('/contacts/sample/xlsx') ?>"><i class="bi bi-filetype-xlsx text-primary fs-6"></i> Excel Template (.xlsx)</a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="<?= url('/contacts/sample/json') ?>"><i class="bi bi-filetype-json text-warning fs-6"></i> JSON Template (.json)</a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="<?= url('/contacts/sample/txt') ?>"><i class="bi bi-filetype-txt text-secondary fs-6"></i> Plain Text List (.txt)</a></li>
+            </ul>
+        </div>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newContactModal">
             <i class="bi bi-person-plus-fill me-1"></i> Add Contact
         </button>
@@ -219,6 +231,26 @@
                         <div class="form-text small d-flex align-items-center gap-2 mt-1">
                             <i class="bi bi-info-circle text-primary"></i>
                             <span>Supports Excel workbooks, standard CSVs (comma/semicolon/tab), JSON arrays, and raw email lists.</span>
+                        </div>
+                        <!-- Download Sample Templates Section -->
+                        <div class="p-2 px-3 bg-white border rounded d-flex flex-wrap justify-content-between align-items-center mt-2 gap-2 shadow-xs">
+                            <div class="small fw-semibold text-muted d-flex align-items-center gap-1">
+                                <i class="bi bi-download text-primary"></i> Download Sample Templates:
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <a href="<?= url('/contacts/sample/csv') ?>" class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size:11px;" title="Download Sample CSV">
+                                    <i class="bi bi-filetype-csv text-success me-1"></i> CSV
+                                </a>
+                                <a href="<?= url('/contacts/sample/xlsx') ?>" class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size:11px;" title="Download Sample Excel (.xlsx)">
+                                    <i class="bi bi-filetype-xlsx text-primary me-1"></i> Excel (.xlsx)
+                                </a>
+                                <a href="<?= url('/contacts/sample/json') ?>" class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size:11px;" title="Download Sample JSON">
+                                    <i class="bi bi-filetype-json text-warning me-1"></i> JSON
+                                </a>
+                                <a href="<?= url('/contacts/sample/txt') ?>" class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size:11px;" title="Download Sample Text List">
+                                    <i class="bi bi-filetype-txt text-secondary me-1"></i> TXT
+                                </a>
+                            </div>
                         </div>
                     </div>
 
