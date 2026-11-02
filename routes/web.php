@@ -71,6 +71,7 @@ Router::group(['middleware' => [AuthMiddleware::class]], function () {
     Router::get('/contacts/sample/{format}', [ContactController::class, 'downloadSample']);
     Router::post('/contacts/store', [ContactController::class, 'store'], [CsrfMiddleware::class]);
     Router::post('/contacts/lists/store', [ContactController::class, 'storeList'], [CsrfMiddleware::class]);
+    Router::post('/contacts/lists/update/{id}', [ContactController::class, 'updateList'], [CsrfMiddleware::class]);
     Router::post('/contacts/import', [ContactController::class, 'import'], [CsrfMiddleware::class]);
     Router::post('/contacts/delete/{id}', [ContactController::class, 'delete'], [CsrfMiddleware::class]);
     Router::post('/contacts/lists/delete/{id}', [ContactController::class, 'deleteList'], [CsrfMiddleware::class]);
