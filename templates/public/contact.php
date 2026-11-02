@@ -89,7 +89,7 @@
                     <p class="text-secondary small mb-4">Fill out the form below and an engineer will review your request.</p>
 
                     <form action="<?= \App\Helpers\UrlHelper::to('/contact') ?>" method="POST">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                        <?= csrf_field() ?>
 
                         <div class="row g-3">
                             <div class="col-md-6">
