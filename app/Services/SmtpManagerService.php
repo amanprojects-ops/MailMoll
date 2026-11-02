@@ -17,65 +17,95 @@ class SmtpManagerService
     }
 
     /**
+     * Configure common SMTP properties and authentication options
+     */
+    private function configureMailer(PHPMailer $mail, array $account, ?string $authTypeOverride = null): void
+    {
+        $mail->isSMTP();
+        $mail->Host = $account['host'];
+        $mail->Port = (int)$account['port'];
+        $mail->SMTPAuth = true;
+        $mail->Username = $account['username'];
+
+        $password = $account['password'] ?? $this->crypto->decrypt($account['password_encrypted'] ?? '');
+        $mail->Password = $password ?? '';
+
+        $encryption = strtolower($account['encryption'] ?? 'tls');
+        if ($encryption === 'ssl') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } elseif ($encryption === 'tls' || $encryption === 'starttls') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $mail->SMTPSecure = '';
+            $mail->SMTPAutoTLS = false;
+        }
+
+        // Set AuthType: Default to LOGIN (standard for cPanel, Exim, Postfix, Gmail, SES, Sendgrid)
+        $authType = $authTypeOverride ?? (!empty($account['auth_type']) ? strtoupper($account['auth_type']) : 'LOGIN');
+        $mail->AuthType = $authType;
+
+        // Permissive SSL options for self-hosted and shared hosting certificates
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true,
+            ],
+        ];
+    }
+
+    /**
      * Test connection to SMTP server and return diagnostic result
      */
     public function testConnection(array $account): array
     {
-        $mail = new PHPMailer(true);
         $debugOutput = '';
+        $configuredAuthType = !empty($account['auth_type']) ? strtoupper($account['auth_type']) : 'LOGIN';
+        $authCandidates = array_unique([$configuredAuthType, 'LOGIN', 'PLAIN', 'CRAM-MD5']);
+        $lastError = '';
 
-        try {
-            $mail->isSMTP();
-            $mail->Host = $account['host'];
-            $mail->Port = (int)$account['port'];
-            $mail->Timeout = 15;
-            $mail->SMTPAuth = true;
-            $mail->Username = $account['username'];
+        foreach ($authCandidates as $authMethod) {
+            $mail = new PHPMailer(true);
+            $debugOutput = '';
 
-            $password = $account['password'] ?? $this->crypto->decrypt($account['password_encrypted'] ?? '');
-            $mail->Password = $password ?? '';
+            try {
+                $mail->Timeout = 15;
+                $this->configureMailer($mail, $account, $authMethod);
 
-            $encryption = strtolower($account['encryption'] ?? 'tls');
-            if ($encryption === 'ssl') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            } elseif ($encryption === 'tls' || $encryption === 'starttls') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            } else {
-                $mail->SMTPSecure = '';
-                $mail->SMTPAutoTLS = false;
+                // Capture debug stream
+                $mail->SMTPDebug = SMTP::DEBUG_CONNECTION;
+                $mail->Debugoutput = function ($str, $level) use (&$debugOutput) {
+                    $debugOutput .= "[" . date('H:i:s') . "] " . trim($str) . "\n";
+                };
+
+                $connected = $mail->smtpConnect();
+
+                if ($connected) {
+                    $mail->smtpClose();
+
+                    // If a fallback auth type succeeded, update account in database if it has an ID
+                    if (!empty($account['id'])) {
+                        SmtpAccount::update((int)$account['id'], ['auth_type' => $authMethod]);
+                    }
+
+                    return [
+                        'success' => true,
+                        'message' => "SMTP Handshake and Authentication successful (Auth: {$authMethod})!",
+                        'debug' => $debugOutput,
+                        'auth_type' => $authMethod,
+                    ];
+                }
+            } catch (\Throwable $e) {
+                $lastError = $e->getMessage();
+                continue;
             }
-
-            // Capture debug stream
-            $mail->SMTPDebug = SMTP::DEBUG_CONNECTION;
-            $mail->Debugoutput = function ($str, $level) use (&$debugOutput) {
-                $debugOutput .= "[" . date('H:i:s') . "] " . trim($str) . "\n";
-            };
-
-            // Test connection using PHPMailer's smtpConnect
-            $connected = $mail->smtpConnect();
-
-            if ($connected) {
-                $mail->smtpClose();
-                return [
-                    'success' => true,
-                    'message' => 'SMTP Handshake and Authentication successful!',
-                    'debug' => $debugOutput,
-                ];
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'SMTP connection failed to initialize.',
-                    'debug' => $debugOutput,
-                ];
-            }
-
-        } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'message' => 'SMTP Error: ' . $e->getMessage(),
-                'debug' => $debugOutput ?: $e->getMessage(),
-            ];
         }
+
+        return [
+            'success' => false,
+            'message' => 'SMTP Error: ' . ($lastError ?: 'Authentication failed with candidate methods.'),
+            'debug' => $debugOutput ?: $lastError,
+        ];
     }
 
     /**
@@ -94,26 +124,9 @@ class SmtpManagerService
         $startTime = microtime(true);
 
         try {
-            $mail->isSMTP();
             $mail->CharSet = PHPMailer::CHARSET_UTF8;
-            $mail->Host = $account['host'];
-            $mail->Port = (int)$account['port'];
             $mail->Timeout = 25;
-            $mail->SMTPAuth = true;
-            $mail->Username = $account['username'];
-
-            $password = $this->crypto->decrypt($account['password_encrypted'] ?? '');
-            $mail->Password = $password ?? '';
-
-            $encryption = strtolower($account['encryption'] ?? 'tls');
-            if ($encryption === 'ssl') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            } elseif ($encryption === 'tls' || $encryption === 'starttls') {
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            } else {
-                $mail->SMTPSecure = '';
-                $mail->SMTPAutoTLS = false;
-            }
+            $this->configureMailer($mail, $account);
 
             // Sender details
             $mail->setFrom($account['from_email'], $account['from_name']);
