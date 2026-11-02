@@ -10,6 +10,8 @@ use App\Models\Contact;
 use App\Models\ContactList;
 use App\Models\AuditLog;
 use App\Database\Connection;
+use App\Services\ContactImportService;
+use Exception;
 
 class ContactController
 {
@@ -90,77 +92,112 @@ class ContactController
         Response::redirect('/contacts');
     }
 
+    /**
+     * AJAX Endpoint: Inspect and preview file structure before importing.
+     */
+    public function previewImport(): void
+    {
+        $fileKey = isset($_FILES['import_file']) ? 'import_file' : (isset($_FILES['csv_file']) ? 'csv_file' : null);
+
+        if (!$fileKey || empty($_FILES[$fileKey]['tmp_name']) || !is_uploaded_file($_FILES[$fileKey]['tmp_name'])) {
+            Response::error('Please upload a valid file to preview.');
+        }
+
+        $tmpPath = $_FILES[$fileKey]['tmp_name'];
+        $origName = $_FILES[$fileKey]['name'];
+        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+        $allowedExts = ['csv', 'tsv', 'txt', 'json', 'xlsx', 'xlsm', 'xls'];
+        if (!in_array($ext, $allowedExts, true)) {
+            Response::error('Unsupported file format. Supported: .csv, .xlsx, .xls, .json, .txt');
+        }
+
+        try {
+            $service = new ContactImportService();
+            $inspection = $service->inspect($tmpPath, $origName);
+            Response::success('File inspected successfully.', $inspection);
+        } catch (Exception $e) {
+            Response::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Bulk Contact Import supporting .csv, .xlsx, .xls, .json, .txt with dedicated filtering.
+     */
+    public function import(): void
+    {
+        $fileKey = isset($_FILES['import_file']) ? 'import_file' : (isset($_FILES['csv_file']) ? 'csv_file' : null);
+
+        if (!$fileKey || empty($_FILES[$fileKey]['tmp_name']) || !is_uploaded_file($_FILES[$fileKey]['tmp_name'])) {
+            Session::setFlash('error', 'Please choose a valid file to import (.csv, .xlsx, .xls, .json, .txt).');
+            Response::redirect('/contacts');
+        }
+
+        $tmpPath = $_FILES[$fileKey]['tmp_name'];
+        $origName = $_FILES[$fileKey]['name'];
+        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+        $allowedExts = ['csv', 'tsv', 'txt', 'json', 'xlsx', 'xlsm', 'xls'];
+        if (!in_array($ext, $allowedExts, true)) {
+            Session::setFlash('error', "Unsupported file format (.{$ext}). Allowed formats: .csv, .xlsx, .xls, .json, .txt");
+            Response::redirect('/contacts');
+        }
+
+        $options = [
+            'list_id' => !empty($_POST['list_id']) ? (int)$_POST['list_id'] : null,
+            'new_list_name' => trim($_POST['new_list_name'] ?? ''),
+            'email_column' => $_POST['email_column'] ?? 'auto',
+            'first_name_column' => $_POST['first_name_column'] ?? 'auto',
+            'last_name_column' => $_POST['last_name_column'] ?? 'auto',
+            'full_name_column' => $_POST['full_name_column'] ?? 'auto',
+            'has_header' => isset($_POST['has_header']) ? (bool)$_POST['has_header'] : true,
+            'duplicate_mode' => in_array($_POST['duplicate_mode'] ?? '', ['skip', 'update'], true) ? $_POST['duplicate_mode'] : 'update',
+            'skip_suppressed' => isset($_POST['skip_suppressed']) ? (bool)$_POST['skip_suppressed'] : true,
+            'extract_regex' => isset($_POST['extract_regex']) ? (bool)$_POST['extract_regex'] : true,
+        ];
+
+        try {
+            $service = new ContactImportService();
+            $stats = $service->import($tmpPath, $origName, $options);
+
+            $msg = "Import completed: {$stats['imported']} new contacts added";
+            if ($stats['updated'] > 0) {
+                $msg .= ", {$stats['updated']} updated";
+            }
+            if ($stats['skipped_duplicate'] > 0) {
+                $msg .= ", {$stats['skipped_duplicate']} existing skipped";
+            }
+            if ($stats['skipped_suppressed'] > 0) {
+                $msg .= ", {$stats['skipped_suppressed']} suppressed filtered";
+            }
+            if ($stats['skipped_invalid'] > 0) {
+                $msg .= ", {$stats['skipped_invalid']} invalid skipped";
+            }
+            $msg .= '.';
+
+            if (!empty($stats['list_name'])) {
+                $msg .= " Assigned to list: '{$stats['list_name']}'.";
+            }
+
+            Session::setFlash('success', $msg);
+
+            if (!empty($stats['list_id'])) {
+                Response::redirect('/contacts?list_id=' . $stats['list_id']);
+            } else {
+                Response::redirect('/contacts');
+            }
+        } catch (Exception $e) {
+            Session::setFlash('error', 'Import failed: ' . $e->getMessage());
+            Response::redirect('/contacts');
+        }
+    }
+
+    /**
+     * Backward-compatible alias for importCsv route
+     */
     public function importCsv(): void
     {
-        $listId = (int)($_POST['list_id'] ?? 0);
-        if (!$listId) {
-            Session::setFlash('error', 'Please select a destination list for imported contacts.');
-            Response::redirect('/contacts');
-        }
-
-        if (empty($_FILES['csv_file']['tmp_name']) || !is_uploaded_file($_FILES['csv_file']['tmp_name'])) {
-            Session::setFlash('error', 'Please upload a valid CSV file.');
-            Response::redirect('/contacts');
-        }
-
-        $file = fopen($_FILES['csv_file']['tmp_name'], 'r');
-        if (!$file) {
-            Session::setFlash('error', 'Failed to open uploaded file.');
-            Response::redirect('/contacts');
-        }
-
-        $header = fgetcsv($file);
-        if (!$header) {
-            Session::setFlash('error', 'CSV file appears to be empty.');
-            fclose($file);
-            Response::redirect('/contacts');
-        }
-
-        // Normalize header
-        $emailIdx = -1;
-        $firstIdx = -1;
-        $lastIdx = -1;
-
-        foreach ($header as $idx => $colName) {
-            $col = strtolower(trim($colName));
-            if (str_contains($col, 'email')) {
-                $emailIdx = $idx;
-            } elseif (str_contains($col, 'first') || $col === 'name' || $col === 'fname') {
-                $firstIdx = $idx;
-            } elseif (str_contains($col, 'last') || $col === 'lname' || $col === 'surname') {
-                $lastIdx = $idx;
-            }
-        }
-
-        if ($emailIdx === -1) {
-            Session::setFlash('error', 'Could not locate an "email" column in CSV header.');
-            fclose($file);
-            Response::redirect('/contacts');
-        }
-
-        $imported = 0;
-        $skipped = 0;
-
-        while (($row = fgetcsv($file)) !== false) {
-            $email = isset($row[$emailIdx]) ? trim($row[$emailIdx]) : '';
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $skipped++;
-                continue;
-            }
-
-            $first = ($firstIdx !== -1 && isset($row[$firstIdx])) ? trim($row[$firstIdx]) : null;
-            $last = ($lastIdx !== -1 && isset($row[$lastIdx])) ? trim($row[$lastIdx]) : null;
-
-            $contactId = Contact::createOrUpdate($email, $first, $last);
-            Contact::attachToList($contactId, $listId);
-            $imported++;
-        }
-
-        fclose($file);
-
-        AuditLog::log('import_contacts_csv', 'contact_lists', $listId, ['imported' => $imported, 'skipped' => $skipped]);
-        Session::setFlash('success', "Import completed: {$imported} contacts imported ({$skipped} skipped).");
-        Response::redirect('/contacts?list_id=' . $listId);
+        $this->import();
     }
 
     public function delete(int $id): void
