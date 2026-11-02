@@ -1,3 +1,4 @@
+
 <!-- Page Header -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
@@ -157,16 +158,24 @@
                                                                 <label class="form-label small fw-semibold">SMTP Host *</label>
                                                                 <input type="text" name="host" class="form-control" value="<?= e($acc['host']) ?>" required>
                                                             </div>
-                                                            <div class="col-md-3">
+                                                            <div class="col-md-2">
                                                                 <label class="form-label small fw-semibold">Port *</label>
                                                                 <input type="number" name="port" class="form-control" value="<?= e($acc['port']) ?>" required>
                                                             </div>
-                                                            <div class="col-md-3">
+                                                            <div class="col-md-2">
                                                                 <label class="form-label small fw-semibold">Encryption *</label>
                                                                 <select name="encryption" class="form-select">
                                                                     <option value="tls" <?= $acc['encryption'] === 'tls' ? 'selected' : '' ?>>TLS (STARTTLS)</option>
                                                                     <option value="ssl" <?= $acc['encryption'] === 'ssl' ? 'selected' : '' ?>>SSL</option>
                                                                     <option value="none" <?= $acc['encryption'] === 'none' ? 'selected' : '' ?>>None</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-md-2">
+                                                                <label class="form-label small fw-semibold">Auth Method</label>
+                                                                <select name="auth_type" class="form-select">
+                                                                    <option value="LOGIN" <?= ($acc['auth_type'] ?? 'LOGIN') === 'LOGIN' ? 'selected' : '' ?>>LOGIN</option>
+                                                                    <option value="PLAIN" <?= ($acc['auth_type'] ?? '') === 'PLAIN' ? 'selected' : '' ?>>PLAIN</option>
+                                                                    <option value="CRAM-MD5" <?= ($acc['auth_type'] ?? '') === 'CRAM-MD5' ? 'selected' : '' ?>>CRAM-MD5</option>
                                                                 </select>
                                                             </div>
                                                             <div class="col-md-6">
@@ -362,16 +371,24 @@
                             <label class="form-label small fw-semibold">SMTP Host *</label>
                             <input type="text" name="host" class="form-control" placeholder="smtp.provider.com" required>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label small fw-semibold">Port *</label>
                             <input type="number" name="port" class="form-control" value="587" required>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label small fw-semibold">Encryption *</label>
                             <select name="encryption" class="form-select">
                                 <option value="tls" selected>TLS (STARTTLS)</option>
                                 <option value="ssl">SSL</option>
                                 <option value="none">None</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold">Auth Method</label>
+                            <select name="auth_type" class="form-select">
+                                <option value="LOGIN" selected>LOGIN</option>
+                                <option value="PLAIN">PLAIN</option>
+                                <option value="CRAM-MD5">CRAM-MD5</option>
                             </select>
                         </div>
                         <div class="col-md-6">
