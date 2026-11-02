@@ -4,7 +4,7 @@
 </div>
 
 <form action="<?= \App\Helpers\UrlHelper::to('/login') ?>" method="POST">
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+    <?= csrf_field() ?>
 
     <div class="mb-3">
         <label for="email" class="form-label small fw-semibold text-light">Email Address</label>
