@@ -49,6 +49,8 @@ Router::group(['middleware' => [AuthMiddleware::class]], function () {
     Router::get('/campaigns', [CampaignController::class, 'index']);
     Router::get('/campaigns/new', [CampaignController::class, 'create']);
     Router::post('/campaigns/store', [CampaignController::class, 'store'], [CsrfMiddleware::class]);
+    Router::get('/campaigns/edit/{id}', [CampaignController::class, 'edit']);
+    Router::post('/campaigns/update/{id}', [CampaignController::class, 'update'], [CsrfMiddleware::class]);
     Router::post('/campaigns/launch/{id}', [CampaignController::class, 'launch'], [CsrfMiddleware::class]);
     Router::post('/campaigns/pause/{id}', [CampaignController::class, 'pause'], [CsrfMiddleware::class]);
     Router::post('/campaigns/resume/{id}', [CampaignController::class, 'resume'], [CsrfMiddleware::class]);
