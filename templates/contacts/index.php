@@ -2,14 +2,14 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
         <h4 class="fw-bold mb-1">Contacts & Audiences</h4>
-        <p class="text-muted small mb-0">Manage permission-based subscriber lists and bulk CSV contact imports.</p>
+        <p class="text-muted small mb-0">Manage permission-based subscriber lists and multi-format bulk contact imports (.csv, .xlsx, .json, .txt).</p>
     </div>
     <div class="d-flex gap-2">
         <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newListModal">
             <i class="bi bi-folder-plus me-1"></i> New List
         </button>
-        <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#importCsvModal">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Import CSV
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+            <i class="bi bi-file-earmark-arrow-up me-1"></i> Import Contacts
         </button>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newContactModal">
             <i class="bi bi-person-plus-fill me-1"></i> Add Contact
@@ -20,9 +20,12 @@
 <div class="row g-4">
     <!-- Contact Lists Column -->
     <div class="col-lg-3">
-        <div class="card">
-            <div class="card-header fw-bold small text-muted text-uppercase">
-                Subscriber Lists (<?= count($lists) ?>)
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white fw-bold small text-muted text-uppercase d-flex justify-content-between align-items-center">
+                <span>Subscriber Lists (<?= count($lists) ?>)</span>
+                <button class="btn btn-sm btn-link p-0 text-primary" data-bs-toggle="modal" data-bs-target="#newListModal" title="New List">
+                    <i class="bi bi-plus-circle-fill"></i>
+                </button>
             </div>
             <div class="list-group list-group-flush small">
                 <a href="<?= url('/contacts') ?>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center <?= !$selectedList ? 'active' : '' ?>">
@@ -53,16 +56,16 @@
 
     <!-- Contacts Table Column -->
     <div class="col-lg-9">
-        <div class="card">
+        <div class="card shadow-sm border-0">
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0 datatable">
-                        <thead>
+                        <thead class="table-light">
                             <tr>
                                 <th>Subscriber</th>
                                 <th>Status</th>
                                 <th>Opt-in Date</th>
-                                <th>Opt-in IP</th>
+                                <th>Opt-in IP / Source</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -70,8 +73,8 @@
                             <?php if (empty($contacts)): ?>
                                 <tr>
                                     <td colspan="5" class="text-center py-5 text-muted">
-                                        <i class="bi bi-people fs-1 d-block mb-2"></i>
-                                        No contacts found in this list. Use <strong>"Add Contact"</strong> or <strong>"Import CSV"</strong>.
+                                        <i class="bi bi-people fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                        No contacts found in this list. Use <strong>"Add Contact"</strong> or <strong>"Import Contacts"</strong>.
                                     </td>
                                 </tr>
                             <?php else: ?>
@@ -112,7 +115,7 @@
 <!-- Modal: New Contact -->
 <div class="modal fade" id="newContactModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content shadow">
             <form action="<?= url('/contacts/store') ?>" method="POST">
                 <?= csrf_field() ?>
                 <div class="modal-header">
@@ -137,7 +140,7 @@
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Assign to List</label>
                         <select name="list_id" class="form-select">
-                            <option value="">-- No Specific List --</option>
+                            <option value="">-- No Specific List (General Pool) --</option>
                             <?php foreach ($lists as $l): ?>
                                 <option value="<?= $l['id'] ?>" <?= $selectedList == $l['id'] ? 'selected' : '' ?>><?= e($l['name']) ?></option>
                             <?php endforeach; ?>
@@ -156,7 +159,7 @@
 <!-- Modal: New List -->
 <div class="modal fade" id="newListModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content shadow">
             <form action="<?= url('/contacts/lists/store') ?>" method="POST">
                 <?= csrf_field() ?>
                 <div class="modal-header">
@@ -182,38 +185,346 @@
     </div>
 </div>
 
-<!-- Modal: Import CSV -->
-<div class="modal fade" id="importCsvModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form action="<?= url('/contacts/import') ?>" method="POST" enctype="multipart/form-data">
+<!-- Modal: Multi-Format Contact Importer with Dedicated Email & Name Filter -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow">
+            <form id="contactImportForm" action="<?= url('/contacts/import') ?>" method="POST" enctype="multipart/form-data">
                 <?= csrf_field() ?>
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Import Contacts via CSV</h5>
+                <div class="modal-header bg-light">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0">
+                            <i class="bi bi-file-earmark-arrow-up text-success me-1"></i> Multi-Format Contact Importer
+                        </h5>
+                        <div class="text-muted small">Import and filter contacts from CSV, Excel (.xlsx, .xls), JSON, or Plain Text.</div>
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
+
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Destination List *</label>
-                        <select name="list_id" class="form-select" required>
-                            <?php foreach ($lists as $l): ?>
-                                <option value="<?= $l['id'] ?>"><?= e($l['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">CSV File *</label>
-                        <input type="file" name="csv_file" class="form-control" accept=".csv" required>
-                        <div class="form-text small">
-                            CSV header should include: <code>email, first_name, last_name</code>
+                    <!-- File Selection Area -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small d-flex justify-content-between align-items-center">
+                            <span>Select File *</span>
+                            <span class="badge bg-light text-secondary border">
+                                .csv, .xlsx, .xls, .json, .txt
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <input type="file" name="import_file" id="importFileInput" class="form-control" accept=".csv, .xlsx, .xls, .json, .txt, .tsv" required>
+                            <button type="button" id="btnInspectFile" class="btn btn-outline-primary" style="display:none;">
+                                <i class="bi bi-search me-1"></i> Inspect
+                            </button>
+                        </div>
+                        <div class="form-text small d-flex align-items-center gap-2 mt-1">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            <span>Supports Excel workbooks, standard CSVs (comma/semicolon/tab), JSON arrays, and raw email lists.</span>
                         </div>
                     </div>
+
+                    <!-- Destination List Options -->
+                    <div class="card mb-4 bg-light border-0">
+                        <div class="card-body py-3">
+                            <label class="form-label fw-bold small text-dark mb-2">
+                                <i class="bi bi-folder-check me-1 text-primary"></i> Destination Audience List
+                            </label>
+                            
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted mb-1">Select Existing List</label>
+                                    <select name="list_id" id="destListSelect" class="form-select form-select-sm">
+                                        <option value="">-- No Specific List (General Contacts) --</option>
+                                        <?php foreach ($lists as $l): ?>
+                                            <option value="<?= $l['id'] ?>" <?= $selectedList == $l['id'] ? 'selected' : '' ?>><?= e($l['name']) ?> (<?= $l['total_contacts'] ?> contacts)</option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-1 text-center text-muted small fw-bold">OR</div>
+                                <div class="col-md-5">
+                                    <label class="form-label small text-muted mb-1">Create New List On-The-Fly</label>
+                                    <input type="text" name="new_list_name" id="newListNameInput" class="form-control form-control-sm" placeholder="e.g. Imported Leads <?= date('M Y') ?>">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Inspection Loading Spinner -->
+                    <div id="importPreviewLoading" class="text-center py-4 text-primary" style="display:none;">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span class="small fw-semibold">Analyzing file structure and auto-detecting email & name columns...</span>
+                    </div>
+
+                    <!-- Dedicated Email & Name Column Filter / Mapping Section -->
+                    <div id="columnMappingSection" class="card mb-4 border" style="display:none;">
+                        <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold text-dark">
+                                <i class="bi bi-funnel-fill text-primary me-1"></i> Dedicated Field Mapping & Filtering
+                            </span>
+                            <span id="fileBadgeFormat" class="badge bg-primary bg-opacity-10 text-primary font-monospace">CSV</span>
+                        </div>
+                        <div class="card-body py-3">
+                            <div class="row g-3">
+                                <!-- Email Dedicated Filter -->
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold text-danger">
+                                        <i class="bi bi-envelope-at me-1"></i> Email Column *
+                                    </label>
+                                    <select name="email_column" id="emailColSelect" class="form-select form-select-sm border-danger">
+                                        <option value="auto">Auto-Detect Email</option>
+                                    </select>
+                                    <div class="form-text small text-muted" style="font-size:11px;">Primary email address field.</div>
+                                </div>
+
+                                <!-- First Name / Full Name Filter -->
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold text-primary">
+                                        <i class="bi bi-person me-1"></i> First Name / Full Name
+                                    </label>
+                                    <select name="first_name_column" id="firstNameColSelect" class="form-select form-select-sm">
+                                        <option value="auto">Auto-Detect Name</option>
+                                    </select>
+                                    <div class="form-text small text-muted" style="font-size:11px;">First name or full single name.</div>
+                                </div>
+
+                                <!-- Last Name Filter -->
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold text-secondary">
+                                        <i class="bi bi-person-badge me-1"></i> Last Name (Optional)
+                                    </label>
+                                    <select name="last_name_column" id="lastNameColSelect" class="form-select form-select-sm">
+                                        <option value="auto">Auto-Detect (or None)</option>
+                                    </select>
+                                    <div class="form-text small text-muted" style="font-size:11px;">Surname or family name.</div>
+                                </div>
+                            </div>
+
+                            <!-- Live Sample Preview Table -->
+                            <div class="mt-3">
+                                <label class="form-label small fw-semibold text-muted d-flex justify-content-between">
+                                    <span>Sample Data Preview (First 5 Rows)</span>
+                                    <span id="sampleRowCountBadge" class="badge bg-secondary">0 rows</span>
+                                </label>
+                                <div class="table-responsive border rounded" style="max-height: 160px; overflow-y: auto;">
+                                    <table id="previewDataTable" class="table table-sm table-striped table-bordered mb-0 small" style="font-size: 11px;">
+                                        <thead class="table-light"></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dedicated Advanced Import & Filter Options -->
+                    <div class="card border">
+                        <div class="card-header bg-light py-2">
+                            <span class="small fw-bold text-dark">
+                                <i class="bi bi-sliders me-1 text-secondary"></i> Dedicated Filtering & Hygiene Rules
+                            </span>
+                        </div>
+                        <div class="card-body py-3">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" name="extract_regex" id="extractRegexOpt" value="1" checked>
+                                        <label class="form-check-label small fw-semibold" for="extractRegexOpt">
+                                            Regex Extraction Filter
+                                        </label>
+                                        <div class="form-text small text-muted" style="font-size:11px;">
+                                            Extracts pure email even from mixed text (e.g. <code>John &lt;user@site.com&gt;</code>).
+                                        </div>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="skip_suppressed" id="skipSuppressedOpt" value="1" checked>
+                                        <label class="form-check-label small fw-semibold" for="skipSuppressedOpt">
+                                            Suppression List Filter (Recommended)
+                                        </label>
+                                        <div class="form-text small text-muted" style="font-size:11px;">
+                                            Automatically filters out unsubscribed, bounced, or suppressed emails.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold mb-1">Duplicate Handling</label>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="radio" name="duplicate_mode" id="dupUpdate" value="update" checked>
+                                        <label class="form-check-label small" for="dupUpdate">
+                                            <strong>Update Existing</strong> - Refresh contact name and attach to list
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="duplicate_mode" id="dupSkip" value="skip">
+                                        <label class="form-check-label small" for="dupSkip">
+                                            <strong>Skip Duplicates</strong> - Keep existing records untouched
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" name="has_header" id="hasHeaderOpt" value="1" checked>
+                                        <label class="form-check-label small" for="hasHeaderOpt">
+                                            First row is a header row
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
-                <div class="modal-footer">
+
+                <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success btn-sm">Upload & Import</button>
+                    <button type="submit" id="btnSubmitImport" class="btn btn-success btn-sm px-4">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Start Import
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Fallback Alias for importCsvModal trigger button if any other views refer to it -->
+<div class="modal fade" id="importCsvModal" tabindex="-1" style="display:none;" aria-hidden="true"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Redirect any click on old #importCsvModal to #importModal
+    const oldModalEl = document.getElementById('importCsvModal');
+    if (oldModalEl) {
+        oldModalEl.addEventListener('show.bs.modal', function (e) {
+            e.preventDefault();
+            const newModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('importModal'));
+            newModal.show();
+        });
+    }
+
+    const fileInput = document.getElementById('importFileInput');
+    const loadingEl = document.getElementById('importPreviewLoading');
+    const mappingSection = document.getElementById('columnMappingSection');
+    const emailSelect = document.getElementById('emailColSelect');
+    const firstNameSelect = document.getElementById('firstNameColSelect');
+    const lastNameSelect = document.getElementById('lastNameColSelect');
+    const previewTable = document.getElementById('previewDataTable');
+    const rowCountBadge = document.getElementById('sampleRowCountBadge');
+    const formatBadge = document.getElementById('fileBadgeFormat');
+    const hasHeaderCheckbox = document.getElementById('hasHeaderOpt');
+
+    fileInput.addEventListener('change', function () {
+        if (!this.files || !this.files[0]) {
+            mappingSection.style.display = 'none';
+            return;
+        }
+
+        const file = this.files[0];
+        const formData = new FormData();
+        formData.append('import_file', file);
+
+        // Fetch CSRF Token
+        const csrfToken = document.querySelector('input[name="_token"]')?.value || '';
+        formData.append('_token', csrfToken);
+
+        loadingEl.style.display = 'block';
+        mappingSection.style.display = 'none';
+
+        fetch('<?= url("/api/contacts/import-preview") ?>', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(res => {
+            loadingEl.style.display = 'none';
+
+            if (!res.success || !res.data) {
+                // If preview fails, keep standard form functional without mapping preview
+                console.warn('Preview note:', res.message || 'File inspection skipped');
+                return;
+            }
+
+            const data = res.data;
+            formatBadge.textContent = (data.format || 'file').toUpperCase();
+            rowCountBadge.textContent = `${data.total_rows || 0} rows found`;
+
+            if (typeof data.has_header !== 'undefined') {
+                hasHeaderCheckbox.checked = !!data.has_header;
+            }
+
+            // Populate Column Selectors
+            const headers = data.headers || [];
+            
+            // Helper to populate select
+            function populateSelect(selectEl, defaultLabel, suggestedIdx) {
+                selectEl.innerHTML = '';
+                const autoOpt = document.createElement('option');
+                autoOpt.value = 'auto';
+                autoOpt.textContent = defaultLabel;
+                selectEl.appendChild(autoOpt);
+
+                headers.forEach((h, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = idx;
+                    opt.textContent = `Column ${idx + 1}: ${h}`;
+                    if (suggestedIdx !== null && suggestedIdx === idx) {
+                        opt.selected = true;
+                    }
+                    selectEl.appendChild(opt);
+                });
+            }
+
+            const suggested = data.suggested || {};
+            populateSelect(emailSelect, 'Auto-Detect Email', suggested.email_idx !== undefined ? suggested.email_idx : null);
+            populateSelect(firstNameSelect, 'Auto-Detect First / Full Name', suggested.first_name_idx !== undefined ? suggested.first_name_idx : (suggested.full_name_idx || null));
+            populateSelect(lastNameSelect, 'Auto-Detect Last Name (or None)', suggested.last_name_idx !== undefined ? suggested.last_name_idx : null);
+
+            // Populate Preview Table
+            const thead = previewTable.querySelector('thead');
+            const tbody = previewTable.querySelector('tbody');
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            const headerRow = document.createElement('tr');
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.textContent = h;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+
+            const sampleRows = data.sample_rows || [];
+            sampleRows.forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach((h, colIdx) => {
+                    const td = document.createElement('td');
+                    td.textContent = row[colIdx] !== undefined ? row[colIdx] : '';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+
+            mappingSection.style.display = 'block';
+        })
+        .catch(err => {
+            loadingEl.style.display = 'none';
+            console.error('Import preview error:', err);
+        });
+    });
+
+    // Clear new list name if existing list selected, and vice versa
+    const destSelect = document.getElementById('destListSelect');
+    const newNameInput = document.getElementById('newListNameInput');
+
+    newNameInput.addEventListener('input', function () {
+        if (this.value.trim() !== '') {
+            destSelect.value = '';
+        }
+    });
+
+    destSelect.addEventListener('change', function () {
+        if (this.value !== '') {
+            newNameInput.value = '';
+        }
+    });
+});
+</script>
