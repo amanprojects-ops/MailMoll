@@ -7,7 +7,7 @@ use App\Database\Connection;
 
 Env::load(__DIR__ . '/../.env');
 
-echo "[" . date('Y-m-d H:i:s') . "] Starting MailMoll cleanup tasks...\n";
+echo "[" . date('Y-m-d H:i:s') . "] Starting MailFlow cleanup tasks...\n";
 
 try {
     $db = Connection::getInstance();
