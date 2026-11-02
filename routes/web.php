@@ -35,7 +35,10 @@ Router::group(['middleware' => [AuthMiddleware::class]], function () {
 
     // SMTP Management
     Router::get('/smtp', [SmtpController::class, 'index']);
+    Router::get('/smtp/sample', [SmtpController::class, 'downloadSample']);
+    Router::get('/smtp/sample/{format}', [SmtpController::class, 'downloadSample']);
     Router::post('/smtp/store', [SmtpController::class, 'store'], [CsrfMiddleware::class]);
+    Router::post('/smtp/import', [SmtpController::class, 'import'], [CsrfMiddleware::class]);
     Router::post('/smtp/update/{id}', [SmtpController::class, 'update'], [CsrfMiddleware::class]);
     Router::post('/smtp/toggle/{id}', [SmtpController::class, 'toggle'], [CsrfMiddleware::class]);
     Router::post('/smtp/delete/{id}', [SmtpController::class, 'delete'], [CsrfMiddleware::class]);
