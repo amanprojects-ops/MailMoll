@@ -9,6 +9,21 @@
         <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newGroupModal">
             <i class="bi bi-collection-fill me-1"></i> New SMTP Group
         </button>
+        <div class="btn-group">
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importSmtpModal">
+                <i class="bi bi-file-earmark-arrow-up me-1"></i> Import SMTP
+            </button>
+            <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" title="Download Sample Templates">
+                <span class="visually-hidden">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm small">
+                <li><h6 class="dropdown-header small text-uppercase fw-bold text-muted"><i class="bi bi-download me-1"></i> Sample Templates</h6></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="<?= url('/smtp/sample/csv') ?>"><i class="bi bi-filetype-csv text-success fs-6"></i> CSV Template (.csv)</a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="<?= url('/smtp/sample/xlsx') ?>"><i class="bi bi-filetype-xlsx text-primary fs-6"></i> Excel Template (.xlsx)</a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="<?= url('/smtp/sample/json') ?>"><i class="bi bi-filetype-json text-warning fs-6"></i> JSON Template (.json)</a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="<?= url('/smtp/sample/txt') ?>"><i class="bi bi-filetype-txt text-secondary fs-6"></i> Plain Text List (.txt)</a></li>
+            </ul>
+        </div>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newSmtpModal">
             <i class="bi bi-plus-circle-fill me-1"></i> Add SMTP Account
         </button>
@@ -489,3 +504,379 @@
         </div>
     </div>
 </div>
+
+<!-- Modal: Bulk Import SMTP Accounts -->
+<div class="modal fade" id="importSmtpModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow">
+            <form id="smtpImportForm" action="<?= url('/smtp/import') ?>" method="POST" enctype="multipart/form-data">
+                <?= csrf_field() ?>
+                <div class="modal-header bg-light">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0">
+                            <i class="bi bi-file-earmark-arrow-up text-success me-1"></i> Bulk Import SMTP Relay Servers
+                        </h5>
+                        <div class="text-muted small">Import multiple SMTP accounts from CSV, Excel (.xlsx, .xls), JSON, or Plain Text.</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- File Selection Area -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small d-flex justify-content-between align-items-center">
+                            <span>Select SMTP File *</span>
+                            <span class="badge bg-light text-secondary border">
+                                .csv, .xlsx, .xls, .json, .txt
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <input type="file" name="import_file" id="smtpImportFileInput" class="form-control" accept=".csv, .xlsx, .xls, .json, .txt, .tsv" required>
+                        </div>
+                        <div class="form-text small d-flex align-items-center gap-2 mt-1">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            <span>Supports standard comma/semicolon/tab/pipe CSVs, Excel workbooks (.xlsx), JSON arrays, or colon-separated text (host:port:user:pass).</span>
+                        </div>
+
+                        <!-- Download Sample Templates Section -->
+                        <div class="p-2 px-3 bg-white border rounded d-flex flex-wrap justify-content-between align-items-center mt-2 gap-2 shadow-xs">
+                            <div class="small fw-semibold text-muted d-flex align-items-center gap-1">
+                                <i class="bi bi-download text-primary"></i> Download Sample Templates:
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <a href="<?= url('/smtp/sample/csv') ?>" class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size:11px;" title="Download Sample CSV">
+                                    <i class="bi bi-filetype-csv text-success me-1"></i> CSV
+                                </a>
+                                <a href="<?= url('/smtp/sample/xlsx') ?>" class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size:11px;" title="Download Sample Excel (.xlsx)">
+                                    <i class="bi bi-filetype-xlsx text-primary me-1"></i> Excel (.xlsx)
+                                </a>
+                                <a href="<?= url('/smtp/sample/json') ?>" class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size:11px;" title="Download Sample JSON">
+                                    <i class="bi bi-filetype-json text-warning me-1"></i> JSON
+                                </a>
+                                <a href="<?= url('/smtp/sample/txt') ?>" class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size:11px;" title="Download Sample Text List">
+                                    <i class="bi bi-filetype-txt text-secondary me-1"></i> TXT
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Target SMTP Routing Group -->
+                    <div class="card mb-4 bg-light border-0">
+                        <div class="card-body py-3">
+                            <label class="form-label fw-bold small text-dark mb-2">
+                                <i class="bi bi-shuffle me-1 text-primary"></i> Target SMTP Routing Group (Optional)
+                            </label>
+                            
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted mb-1">Assign to Existing Group</label>
+                                    <select name="group_id" id="smtpDestGroupSelect" class="form-select form-select-sm">
+                                        <option value="">-- No Group Assignment (Standalone) --</option>
+                                        <?php foreach ($groups as $g): ?>
+                                            <option value="<?= $g['id'] ?>"><?= e($g['name']) ?> (<?= count($g['members'] ?? []) ?> accounts)</option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-1 text-center text-muted small fw-bold">OR</div>
+                                <div class="col-md-5">
+                                    <label class="form-label small text-muted mb-1">Create New Group On-The-Fly</label>
+                                    <input type="text" name="new_group_name" id="smtpNewGroupNameInput" class="form-control form-control-sm" placeholder="e.g. Imported Pool <?= date('M Y') ?>">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Inspection Loading Spinner -->
+                    <div id="smtpImportLoading" class="text-center py-4 text-primary" style="display:none;">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span class="small fw-semibold">Analyzing SMTP file structure and auto-detecting host, port, credentials...</span>
+                    </div>
+
+                    <!-- Field Mapping & Column Filter Section -->
+                    <div id="smtpColumnMappingSection" class="card mb-4 border" style="display:none;">
+                        <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold text-dark">
+                                <i class="bi bi-funnel-fill text-primary me-1"></i> Detected Column Mappings
+                            </span>
+                            <span id="smtpFileBadgeFormat" class="badge bg-primary bg-opacity-10 text-primary font-monospace">CSV</span>
+                        </div>
+                        <div class="card-body py-3">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold text-danger">Host / Server *</label>
+                                    <select name="host_column" id="smtpHostColSelect" class="form-select form-select-sm border-danger">
+                                        <option value="auto">Auto-Detect Host</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold text-danger">Username / Login *</label>
+                                    <select name="username_column" id="smtpUserColSelect" class="form-select form-select-sm border-danger">
+                                        <option value="auto">Auto-Detect Username</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold text-danger">Password *</label>
+                                    <select name="password_column" id="smtpPassColSelect" class="form-select form-select-sm border-danger">
+                                        <option value="auto">Auto-Detect Password</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">Port</label>
+                                    <select name="port_column" id="smtpPortColSelect" class="form-select form-select-sm">
+                                        <option value="auto">Auto (or Default)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">From Email</label>
+                                    <select name="from_email_column" id="smtpFromEmailColSelect" class="form-select form-select-sm">
+                                        <option value="auto">Auto (or Username)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">From Name</label>
+                                    <select name="from_name_column" id="smtpFromNameColSelect" class="form-select form-select-sm">
+                                        <option value="auto">Auto-Detect Name</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">Account Title</label>
+                                    <select name="name_column" id="smtpNameColSelect" class="form-select form-select-sm">
+                                        <option value="auto">Auto-Generate Title</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Live Sample Preview Table -->
+                            <div class="mt-3">
+                                <label class="form-label small fw-semibold text-muted d-flex justify-content-between">
+                                    <span>Sample Data Preview (First 5 Rows)</span>
+                                    <span id="smtpRowCountBadge" class="badge bg-secondary">0 rows</span>
+                                </label>
+                                <div class="table-responsive border rounded" style="max-height: 160px; overflow-y: auto;">
+                                    <table id="smtpPreviewTable" class="table table-sm table-striped table-bordered mb-0 small" style="font-size: 11px;">
+                                        <thead class="table-light"></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Default Settings & Hygiene Configuration -->
+                    <div class="card border">
+                        <div class="card-header bg-light py-2">
+                            <span class="small fw-bold text-dark">
+                                <i class="bi bi-sliders me-1 text-secondary"></i> Default Settings & Hygiene Rules
+                            </span>
+                        </div>
+                        <div class="card-body py-3">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">Default Port</label>
+                                    <input type="number" name="default_port" class="form-control form-control-sm" value="587">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">Default Encryption</label>
+                                    <select name="default_encryption" class="form-select form-select-sm">
+                                        <option value="tls" selected>TLS (STARTTLS)</option>
+                                        <option value="ssl">SSL / SMTPS (465)</option>
+                                        <option value="none">None (Plaintext)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">Default Daily Limit</label>
+                                    <input type="number" name="default_daily_limit" class="form-control form-control-sm" value="500">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">Default Hourly Limit</label>
+                                    <input type="number" name="default_hourly_limit" class="form-control form-control-sm" value="100">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold mb-1">Duplicate Handling (Host + Username)</label>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="radio" name="duplicate_mode" id="smtpDupUpdate" value="update" checked>
+                                        <label class="form-check-label small" for="smtpDupUpdate">
+                                            <strong>Update Existing</strong> - Refresh credentials & settings
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="duplicate_mode" id="smtpDupSkip" value="skip">
+                                        <label class="form-check-label small" for="smtpDupSkip">
+                                            <strong>Skip Duplicates</strong> - Do not overwrite existing servers
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 d-flex align-items-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="has_header" id="smtpHasHeaderOpt" value="1" checked>
+                                        <label class="form-check-label small fw-semibold" for="smtpHasHeaderOpt">
+                                            First row is a column header row
+                                        </label>
+                                        <div class="text-muted small" style="font-size: 11px;">Uncheck if file contains raw server credentials without header names.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="btnSubmitSmtpImport" class="btn btn-success btn-sm px-4">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Start SMTP Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const smtpFileInput = document.getElementById('smtpImportFileInput');
+    const smtpLoadingEl = document.getElementById('smtpImportLoading');
+    const smtpMappingSection = document.getElementById('smtpColumnMappingSection');
+    const hostSelect = document.getElementById('smtpHostColSelect');
+    const userSelect = document.getElementById('smtpUserColSelect');
+    const passSelect = document.getElementById('smtpPassColSelect');
+    const portSelect = document.getElementById('smtpPortColSelect');
+    const fromEmailSelect = document.getElementById('smtpFromEmailColSelect');
+    const fromNameSelect = document.getElementById('smtpFromNameColSelect');
+    const nameSelect = document.getElementById('smtpNameColSelect');
+    const previewTable = document.getElementById('smtpPreviewTable');
+    const rowCountBadge = document.getElementById('smtpRowCountBadge');
+    const formatBadge = document.getElementById('smtpFileBadgeFormat');
+    const hasHeaderCheckbox = document.getElementById('smtpHasHeaderOpt');
+
+    if (smtpFileInput) {
+        smtpFileInput.addEventListener('change', function () {
+            if (!this.files || !this.files[0]) {
+                smtpMappingSection.style.display = 'none';
+                return;
+            }
+
+            const file = this.files[0];
+            const formData = new FormData();
+            formData.append('import_file', file);
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]')?.value || '';
+            formData.append('_token', csrfToken);
+
+            smtpLoadingEl.style.display = 'block';
+            smtpMappingSection.style.display = 'none';
+
+            fetch('<?= url("/api/smtp/import-preview") ?>', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(res => {
+                smtpLoadingEl.style.display = 'none';
+
+                if (!res.success || !res.data) {
+                    return;
+                }
+
+                const data = res.data;
+                formatBadge.textContent = (data.format || 'file').toUpperCase();
+                rowCountBadge.textContent = `${data.total_rows || 0} rows found`;
+
+                if (typeof data.has_header !== 'undefined') {
+                    hasHeaderCheckbox.checked = !!data.has_header;
+                }
+
+                const headers = data.headers || [];
+
+                function populateSelect(selectEl, defaultLabel, suggestedIdx) {
+                    if (!selectEl) return;
+                    selectEl.innerHTML = '';
+                    const autoOpt = document.createElement('option');
+                    autoOpt.value = 'auto';
+                    autoOpt.textContent = defaultLabel;
+                    selectEl.appendChild(autoOpt);
+
+                    headers.forEach((h, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = idx;
+                        opt.textContent = `Col ${idx + 1}: ${h}`;
+                        if (suggestedIdx !== null && suggestedIdx === idx) {
+                            opt.selected = true;
+                        }
+                        selectEl.appendChild(opt);
+                    });
+                }
+
+                const suggested = data.suggested || {};
+                populateSelect(hostSelect, 'Auto-Detect Host', suggested.host_idx);
+                populateSelect(userSelect, 'Auto-Detect Username', suggested.username_idx);
+                populateSelect(passSelect, 'Auto-Detect Password', suggested.password_idx);
+                populateSelect(portSelect, 'Auto (or Default)', suggested.port_idx);
+                populateSelect(fromEmailSelect, 'Auto (or Username)', suggested.from_email_idx);
+                populateSelect(fromNameSelect, 'Auto-Detect Name', suggested.from_name_idx);
+                populateSelect(nameSelect, 'Auto-Generate Title', suggested.name_idx);
+
+                // Populate Preview Table
+                const thead = previewTable.querySelector('thead');
+                const tbody = previewTable.querySelector('tbody');
+                thead.innerHTML = '';
+                tbody.innerHTML = '';
+
+                const headerRow = document.createElement('tr');
+                headers.forEach(h => {
+                    const th = document.createElement('th');
+                    th.textContent = h;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+
+                const sampleRows = data.sample_rows || [];
+                sampleRows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    headers.forEach((h, colIdx) => {
+                        const td = document.createElement('td');
+                        // Mask password if detected
+                        if (colIdx === suggested.password_idx && row[colIdx]) {
+                            td.textContent = '••••••••';
+                        } else {
+                            td.textContent = row[colIdx] !== undefined ? row[colIdx] : '';
+                        }
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+
+                smtpMappingSection.style.display = 'block';
+            })
+            .catch(err => {
+                smtpLoadingEl.style.display = 'none';
+                console.error('SMTP import preview error:', err);
+            });
+        });
+    }
+
+    // Clear new group name if existing selected, and vice versa
+    const smtpDestSelect = document.getElementById('smtpDestGroupSelect');
+    const smtpNewNameInput = document.getElementById('smtpNewGroupNameInput');
+
+    if (smtpDestSelect && smtpNewNameInput) {
+        smtpNewNameInput.addEventListener('input', function () {
+            if (this.value.trim() !== '') {
+                smtpDestSelect.value = '';
+            }
+        });
+
+        smtpDestSelect.addEventListener('change', function () {
+            if (this.value !== '') {
+                smtpNewNameInput.value = '';
+            }
+        });
+    }
+});
+</script>
