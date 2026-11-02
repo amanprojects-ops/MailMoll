@@ -17,6 +17,7 @@ use App\Controllers\SuppressionController;
 use App\Controllers\AnalyticsController;
 use App\Controllers\SettingsController;
 use App\Controllers\PublicController;
+use App\Controllers\ApiKeyController;
 
 // Public Marketing Pages
 Router::get('/', [PublicController::class, 'home']);
@@ -124,6 +125,11 @@ Router::group(['middleware' => [AuthMiddleware::class]], function () {
 
     // Analytics
     Router::get('/analytics', [AnalyticsController::class, 'index']);
+
+    // API Keys
+    Router::get('/api-keys', [ApiKeyController::class, 'index']);
+    Router::post('/api-keys/create', [ApiKeyController::class, 'store'], [CsrfMiddleware::class]);
+    Router::post('/api-keys/delete/{id}', [ApiKeyController::class, 'delete'], [CsrfMiddleware::class]);
 
     // Settings & Profile
     Router::get('/settings', [SettingsController::class, 'index']);
