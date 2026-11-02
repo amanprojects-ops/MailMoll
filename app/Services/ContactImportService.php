@@ -758,4 +758,190 @@ class ContactImportService
             'full_name_idx' => $fullNameIdx,
         ];
     }
+
+    /**
+     * Generate downloadable sample template files in CSV, XLSX, JSON, or TXT formats.
+     */
+    public function generateSample(string $format): array
+    {
+        $format = strtolower(trim($format));
+
+        switch ($format) {
+            case 'xlsx':
+            case 'excel':
+                return $this->generateSampleXlsx();
+
+            case 'json':
+                return $this->generateSampleJson();
+
+            case 'txt':
+                return $this->generateSampleTxt();
+
+            case 'csv':
+            default:
+                return $this->generateSampleCsv();
+        }
+    }
+
+    protected function generateSampleCsv(): array
+    {
+        $csv = "Email,First Name,Last Name,Company\r\n";
+        $csv .= "john.doe@example.com,John,Doe,Acme Corporation\r\n";
+        $csv .= "jane.smith@example.org,Jane,Smith,Global Tech\r\n";
+        $csv .= "alex.wong@example.net,Alex,Wong,Venture Labs\r\n";
+        $csv .= "priya.patel@example.com,Priya,Patel,Innovate Solutions\r\n";
+
+        return [
+            'content' => $csv,
+            'filename' => 'mailmoll_sample_contacts.csv',
+            'mime' => 'text/csv; charset=utf-8',
+        ];
+    }
+
+    protected function generateSampleJson(): array
+    {
+        $data = [
+            [
+                'email' => 'john.doe@example.com',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'company' => 'Acme Corporation',
+            ],
+            [
+                'email' => 'jane.smith@example.org',
+                'first_name' => 'Jane',
+                'last_name' => 'Smith',
+                'company' => 'Global Tech',
+            ],
+            [
+                'email' => 'alex.wong@example.net',
+                'first_name' => 'Alex',
+                'last_name' => 'Wong',
+                'company' => 'Venture Labs',
+            ],
+            [
+                'email' => 'priya.patel@example.com',
+                'first_name' => 'Priya',
+                'last_name' => 'Patel',
+                'company' => 'Innovate Solutions',
+            ],
+        ];
+
+        return [
+            'content' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'filename' => 'mailmoll_sample_contacts.json',
+            'mime' => 'application/json; charset=utf-8',
+        ];
+    }
+
+    protected function generateSampleTxt(): array
+    {
+        $txt = "# MailMoll Contact Import Sample List\n"
+             . "# Accepted formats: raw email OR email, First Name, Last Name\n"
+             . "john.doe@example.com, John, Doe\n"
+             . "jane.smith@example.org, Jane, Smith\n"
+             . "alex.wong@example.net, Alex, Wong\n"
+             . "priya.patel@example.com, Priya, Patel\n"
+             . "rahul.sharma@example.in, Rahul, Sharma\n";
+
+        return [
+            'content' => $txt,
+            'filename' => 'mailmoll_sample_contacts.txt',
+            'mime' => 'text/plain; charset=utf-8',
+        ];
+    }
+
+    protected function generateSampleXlsx(): array
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'sample_xlsx_');
+        $zip = new ZipArchive();
+        if ($zip->open($tempFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+            $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedString+xml"/>
+</Types>');
+
+            $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>');
+
+            $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
+</Relationships>');
+
+            $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheets><sheet name="Contacts" sheetId="1" r:id="rId1" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/></sheets>
+</workbook>');
+
+            $strings = [
+                'Email Address', 'First Name', 'Last Name', 'Company',
+                'john.doe@example.com', 'John', 'Doe', 'Acme Corporation',
+                'jane.smith@example.org', 'Jane', 'Smith', 'Global Tech',
+                'alex.wong@example.net', 'Alex', 'Wong', 'Venture Labs',
+                'priya.patel@example.com', 'Priya', 'Patel', 'Innovate Solutions'
+            ];
+
+            $sstXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="' . count($strings) . '" uniqueCount="' . count($strings) . '">';
+            foreach ($strings as $str) {
+                $sstXml .= '<si><t>' . htmlspecialchars($str, ENT_XML1, 'UTF-8') . '</t></si>';
+            }
+            $sstXml .= '</sst>';
+            $zip->addFromString('xl/sharedStrings.xml', $sstXml);
+
+            $sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>
+    <row r="1">
+      <c r="A1" t="s"><v>0</v></c>
+      <c r="B1" t="s"><v>1</v></c>
+      <c r="C1" t="s"><v>2</v></c>
+      <c r="D1" t="s"><v>3</v></c>
+    </row>
+    <row r="2">
+      <c r="A2" t="s"><v>4</v></c>
+      <c r="B2" t="s"><v>5</v></c>
+      <c r="C2" t="s"><v>6</v></c>
+      <c r="D2" t="s"><v>7</v></c>
+    </row>
+    <row r="3">
+      <c r="A3" t="s"><v>8</v></c>
+      <c r="B3" t="s"><v>9</v></c>
+      <c r="C3" t="s"><v>10</v></c>
+      <c r="D3" t="s"><v>11</v></c>
+    </row>
+    <row r="4">
+      <c r="A4" t="s"><v>12</v></c>
+      <c r="B4" t="s"><v>13</v></c>
+      <c r="C4" t="s"><v>14</v></c>
+      <c r="D4" t="s"><v>15</v></c>
+    </row>
+    <row r="5">
+      <c r="A5" t="s"><v>16</v></c>
+      <c r="B5" t="s"><v>17</v></c>
+      <c r="C5" t="s"><v>18</v></c>
+      <c r="D5" t="s"><v>19</v></c>
+    </row>
+  </sheetData>
+</worksheet>';
+            $zip->addFromString('xl/worksheets/sheet1.xml', $sheetXml);
+            $zip->close();
+        }
+
+        $content = file_get_contents($tempFile);
+        @unlink($tempFile);
+
+        return [
+            'content' => $content,
+            'filename' => 'mailmoll_sample_contacts.xlsx',
+            'mime' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ];
+    }
 }
