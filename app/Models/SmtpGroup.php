@@ -37,4 +37,12 @@ class SmtpGroup extends Model
             throw $e;
         }
     }
+
+    public static function addMember(int $groupId, int $accountId): void
+    {
+        $stmt = self::getDb()->prepare("
+            INSERT OR IGNORE INTO smtp_group_members (group_id, smtp_account_id) VALUES (:group_id, :account_id)
+        ");
+        $stmt->execute([':group_id' => $groupId, ':account_id' => $accountId]);
+    }
 }
