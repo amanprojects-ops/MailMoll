@@ -25,4 +25,7 @@ Router::group(['middleware' => [AuthMiddleware::class]], function () {
 
     // Contact Import Preview
     Router::post('/api/contacts/import-preview', [ContactController::class, 'previewImport'], [CsrfMiddleware::class]);
+
+    // SMTP Bulk Import Preview
+    Router::post('/api/smtp/import-preview', [SmtpController::class, 'previewImport'], [CsrfMiddleware::class]);
 });
