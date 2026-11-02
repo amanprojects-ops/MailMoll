@@ -37,6 +37,17 @@ Router::get('/robots.txt', [PublicController::class, 'robots']);
 // Public & Guest Routes
 Router::get('/login', [AuthController::class, 'showLogin'], [GuestMiddleware::class]);
 Router::post('/login', [AuthController::class, 'login'], [GuestMiddleware::class, CsrfMiddleware::class]);
+Router::get('/register', [AuthController::class, 'showRegister'], [GuestMiddleware::class]);
+Router::post('/register', [AuthController::class, 'register'], [GuestMiddleware::class, CsrfMiddleware::class]);
+Router::get('/forgot-password', [AuthController::class, 'showForgotPassword'], [GuestMiddleware::class]);
+Router::post('/forgot-password', [AuthController::class, 'forgotPassword'], [GuestMiddleware::class, CsrfMiddleware::class]);
+Router::get('/reset-password', [AuthController::class, 'showResetPassword'], [GuestMiddleware::class]);
+Router::post('/reset-password', [AuthController::class, 'resetPassword'], [GuestMiddleware::class, CsrfMiddleware::class]);
+Router::get('/verify-email', [AuthController::class, 'showVerifyEmail']);
+Router::get('/verify-email/confirm', [AuthController::class, 'verifyEmail']);
+Router::post('/verify-email/resend', [AuthController::class, 'resendVerification'], [CsrfMiddleware::class]);
+Router::get('/two-factor', [AuthController::class, 'showTwoFactor']);
+Router::post('/two-factor', [AuthController::class, 'twoFactor'], [CsrfMiddleware::class]);
 Router::get('/logout', [AuthController::class, 'logout']);
 Router::post('/logout', [AuthController::class, 'logout'], [CsrfMiddleware::class]);
 
