@@ -61,7 +61,9 @@ class Session
     {
         self::start();
         if (empty($_SESSION['_csrf_token'])) {
-            $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
+            $token = bin2hex(random_bytes(32));
+            $_SESSION['_csrf_token'] = $token;
+            $_SESSION['csrf_token'] = $token;
         }
         return $_SESSION['_csrf_token'];
     }
@@ -69,17 +71,20 @@ class Session
     public static function validateCsrfToken(?string $token): bool
     {
         self::start();
-        if (empty($token) || empty($_SESSION['_csrf_token'])) {
+        $sessionToken = $_SESSION['_csrf_token'] ?? $_SESSION['csrf_token'] ?? null;
+        if (empty($token) || empty($sessionToken)) {
             return false;
         }
-        return hash_equals($_SESSION['_csrf_token'], $token);
+        return hash_equals($sessionToken, $token);
     }
 
     public static function regenerate(): void
     {
         self::start();
         session_regenerate_id(true);
-        $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
+        $token = bin2hex(random_bytes(32));
+        $_SESSION['_csrf_token'] = $token;
+        $_SESSION['csrf_token'] = $token;
     }
 
     public static function set(string $key, mixed $value): void
