@@ -7,7 +7,7 @@
 </div>
 
 <form action="<?= \App\Helpers\UrlHelper::to('/reset-password') ?>" method="POST">
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+    <?= csrf_field() ?>
     <input type="hidden" name="token" value="<?= htmlspecialchars($token ?? ($_GET['token'] ?? '')) ?>">
     <input type="hidden" name="email" value="<?= htmlspecialchars($email ?? ($_GET['email'] ?? '')) ?>">
 
