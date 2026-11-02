@@ -2,6 +2,7 @@
 
 use App\Helpers\Router;
 use App\Middleware\AuthMiddleware;
+use App\Middleware\AdminMiddleware;
 use App\Middleware\GuestMiddleware;
 use App\Middleware\CsrfMiddleware;
 
@@ -18,6 +19,7 @@ use App\Controllers\AnalyticsController;
 use App\Controllers\SettingsController;
 use App\Controllers\PublicController;
 use App\Controllers\ApiKeyController;
+use App\Controllers\AdminController;
 
 // Public Marketing Pages
 Router::get('/', [PublicController::class, 'home']);
@@ -137,4 +139,21 @@ Router::group(['middleware' => [AuthMiddleware::class]], function () {
     Router::get('/settings/backup', [SettingsController::class, 'backup']);
     Router::get('/profile', [SettingsController::class, 'profile']);
     Router::post('/profile/update', [SettingsController::class, 'updateProfile'], [CsrfMiddleware::class]);
+});
+
+// Super Admin Protected Routes
+Router::group(['middleware' => [AuthMiddleware::class, AdminMiddleware::class]], function () {
+    Router::get('/admin/dashboard', [AdminController::class, 'dashboard']);
+    Router::get('/admin/users', [AdminController::class, 'users']);
+    Router::post('/admin/users/update/{id}', [AdminController::class, 'updateUserRole'], [CsrfMiddleware::class]);
+    Router::get('/admin/subscriptions', [AdminController::class, 'subscriptions']);
+    Router::get('/admin/system-health', [AdminController::class, 'systemHealth']);
+    Router::get('/admin/queue', [AdminController::class, 'queue']);
+    Router::get('/admin/email-logs', [AdminController::class, 'emailLogs']);
+    Router::get('/admin/security', [AdminController::class, 'security']);
+    Router::get('/admin/audit-logs', [AdminController::class, 'auditLogs']);
+    Router::get('/admin/settings', [AdminController::class, 'settings']);
+    Router::post('/admin/settings/update', [AdminController::class, 'updateSettings'], [CsrfMiddleware::class]);
+    Router::get('/admin/backups', [AdminController::class, 'backups']);
+    Router::post('/admin/backups/create', [AdminController::class, 'createBackup'], [CsrfMiddleware::class]);
 });
