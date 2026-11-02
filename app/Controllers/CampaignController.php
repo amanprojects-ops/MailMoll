@@ -121,6 +121,112 @@ class CampaignController
         Response::redirect('/campaigns');
     }
 
+    public function edit(int $id): void
+    {
+        $campaign = Campaign::find($id);
+        if (!$campaign) {
+            Session::setFlash('error', 'Campaign not found.');
+            Response::redirect('/campaigns');
+        }
+
+        if ($campaign['status'] !== 'draft') {
+            Session::setFlash('error', 'Only draft campaigns can be edited. This campaign is ' . $campaign['status'] . '.');
+            Response::redirect('/campaigns');
+        }
+
+        $smtpAccounts = SmtpAccount::where('status', 'active');
+        $smtpGroups = SmtpGroup::all();
+        $contactLists = ContactList::allWithCounts();
+        $templates = EmailTemplate::all();
+
+        View::render('campaigns/wizard', [
+            'title' => 'Edit Draft Campaign - ' . $campaign['title'],
+            'activeNav' => 'campaigns',
+            'campaign' => $campaign,
+            'smtpAccounts' => $smtpAccounts,
+            'smtpGroups' => $smtpGroups,
+            'contactLists' => $contactLists,
+            'templates' => $templates,
+        ]);
+    }
+
+    public function update(int $id): void
+    {
+        $campaign = Campaign::find($id);
+        if (!$campaign) {
+            Session::setFlash('error', 'Campaign not found.');
+            Response::redirect('/campaigns');
+        }
+
+        if ($campaign['status'] !== 'draft') {
+            Session::setFlash('error', 'Only draft campaigns can be modified.');
+            Response::redirect('/campaigns');
+        }
+
+        $validator = Validator::make($_POST, [
+            'title' => 'required|min:3',
+            'subject' => 'required',
+            'sender_name' => 'required',
+            'sender_email' => 'required|email',
+            'body_html' => 'required',
+            'target_lists' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            Session::flashOldInput($_POST);
+            Session::setFlash('error', $validator->firstError());
+            Response::redirect('/campaigns/edit/' . $id);
+        }
+
+        $listIds = $_POST['target_lists'] ?? [];
+        if (is_string($listIds)) {
+            $listIds = explode(',', $listIds);
+        }
+
+        $routingType = $_POST['routing_type'] ?? 'group';
+        $smtpGroupId = $routingType === 'group' ? (int)($_POST['smtp_group_id'] ?? 0) : null;
+        $smtpAccountId = $routingType === 'single_smtp' ? (int)($_POST['smtp_account_id'] ?? 0) : null;
+
+        $scheduledAt = null;
+        if (!empty($_POST['schedule_time'])) {
+            $scheduledAt = date('Y-m-d H:i:s', strtotime($_POST['schedule_time']));
+        }
+
+        Campaign::update($id, [
+            'title' => trim($_POST['title']),
+            'subject' => trim($_POST['subject']),
+            'sender_name' => trim($_POST['sender_name']),
+            'sender_email' => trim($_POST['sender_email']),
+            'reply_to' => !empty($_POST['reply_to']) ? trim($_POST['reply_to']) : null,
+            'template_id' => !empty($_POST['template_id']) ? (int)$_POST['template_id'] : null,
+            'routing_type' => $routingType,
+            'smtp_group_id' => $smtpGroupId,
+            'smtp_account_id' => $smtpAccountId,
+            'target_type' => 'lists',
+            'target_list_ids' => json_encode($listIds),
+            'body_html' => $_POST['body_html'],
+            'body_plain' => $_POST['body_plain'] ?? strip_tags($_POST['body_html']),
+            'scheduled_at' => $scheduledAt,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        AuditLog::log('update_campaign', 'campaigns', $id, ['title' => $_POST['title']]);
+
+        // If user clicked "Launch Now"
+        if (isset($_POST['launch_immediately']) && $_POST['launch_immediately'] == '1') {
+            try {
+                $count = $this->dispatcher->dispatchCampaign($id);
+                Session::setFlash('success', "Campaign updated and launched! Queued {$count} personalized messages.");
+            } catch (\Throwable $e) {
+                Session::setFlash('error', "Campaign updated, but launch failed: " . $e->getMessage());
+            }
+        } else {
+            Session::setFlash('success', "Draft campaign '{$_POST['title']}' updated successfully.");
+        }
+
+        Response::redirect('/campaigns');
+    }
+
     public function launch(int $id): void
     {
         try {
