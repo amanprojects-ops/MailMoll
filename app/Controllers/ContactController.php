@@ -200,6 +200,31 @@ class ContactController
         $this->import();
     }
 
+    /**
+     * Download sample contact template files (csv, xlsx, json, txt)
+     */
+    public function downloadSample(?string $format = null): void
+    {
+        $format = $format ?: ($_GET['format'] ?? 'csv');
+        $service = new ContactImportService();
+        $sample = $service->generateSample($format);
+
+        header('Content-Description: File Transfer');
+        header('Content-Type: ' . $sample['mime']);
+        header('Content-Disposition: attachment; filename="' . $sample['filename'] . '"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . strlen($sample['content']));
+
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
+
+        echo $sample['content'];
+        exit;
+    }
+
     public function delete(int $id): void
     {
         Contact::delete($id);
