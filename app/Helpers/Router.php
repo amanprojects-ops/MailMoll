@@ -61,13 +61,33 @@ class Router
 
         $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
-        // Normalize URI by removing base script/subfolder path
-        $scriptName = dirname($_SERVER['SCRIPT_NAME'] ?? '');
-        if ($scriptName !== '/' && $scriptName !== '\\' && str_starts_with($uri, $scriptName)) {
-            $uri = substr($uri, strlen($scriptName));
+        // Determine base script/subfolder directory (e.g. /MailMoll/public -> /MailMoll)
+        $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+        if ($scriptDir === '.' || $scriptDir === '/') {
+            $scriptDir = '';
         }
 
-        // Also handle if url starts with /public
+        // First strip the full script directory if matched (e.g. /MailMoll/public)
+        if ($scriptDir !== '' && str_starts_with($uri, $scriptDir)) {
+            $uri = substr($uri, strlen($scriptDir));
+        }
+
+        // Strip subfolder if script is located inside /public (e.g. /MailMoll)
+        $subfolder = preg_replace('#/public/?$#i', '', $scriptDir);
+        if ($subfolder !== '' && str_starts_with($uri, $subfolder)) {
+            $uri = substr($uri, strlen($subfolder));
+        }
+
+        // Also check configured app.url path as fallback
+        $configuredPath = parse_url(config('app.url', ''), PHP_URL_PATH);
+        if (!empty($configuredPath) && $configuredPath !== '/') {
+            $configuredSubfolder = preg_replace('#/public/?$#i', '', $configuredPath);
+            if (!empty($configuredSubfolder) && str_starts_with($uri, $configuredSubfolder)) {
+                $uri = substr($uri, strlen($configuredSubfolder));
+            }
+        }
+
+        // Also handle if remaining url starts with /public
         if (str_starts_with($uri, '/public')) {
             $uri = substr($uri, 7);
         }
