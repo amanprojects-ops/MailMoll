@@ -5,11 +5,11 @@
         <p class="text-muted small mb-0">Inspect atomic queue states, worker leases, delivery retries, and errors.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <!-- Clear Failed / Stuck Jobs -->
+        <!-- Flush Failed / Stuck Jobs -->
         <form action="<?= url('/queue/clear-failed') ?>" method="POST" class="d-inline m-0">
             <?= csrf_field() ?>
-            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Purge all failed, cancelled, and timed-out stuck jobs from the queue table?');">
-                <i class="bi bi-trash3 me-1"></i> Clear Failed Jobs
+            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Flush all failed, cancelled, and timed-out stuck jobs from the queue table?');">
+                <i class="bi bi-trash3 me-1"></i> Flush Failed
             </button>
         </form>
 
@@ -18,6 +18,14 @@
             <?= csrf_field() ?>
             <button type="submit" class="btn btn-outline-warning btn-sm" onclick="return confirm('Reset all timed-out stuck processing jobs back to pending?');" title="Reset stuck processing locks">
                 <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Stuck
+            </button>
+        </form>
+
+        <!-- Flush All Queue Jobs -->
+        <form action="<?= url('/queue/purge-all') ?>" method="POST" class="d-inline m-0">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('WARNING: Are you sure you want to permanently delete ALL jobs in the queue?');" title="Flush entire queue">
+                <i class="bi bi-fire me-1"></i> Flush All
             </button>
         </form>
 
