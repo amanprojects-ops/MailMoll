@@ -69,7 +69,7 @@ class QueueController
 
         AuditLog::log('retry_queue_job', 'email_queue', $id);
         Session::setFlash('success', "Job #{$id} reset to pending status.");
-        Response::redirect('/queue');
+        Response::back();
     }
 
     public function cancel(int $id): void
@@ -82,7 +82,7 @@ class QueueController
 
         AuditLog::log('cancel_queue_job', 'email_queue', $id);
         Session::setFlash('success', "Job #{$id} cancelled.");
-        Response::redirect('/queue');
+        Response::back();
     }
 
     public function clearFailed(): void
@@ -90,12 +90,12 @@ class QueueController
         $db = Connection::getInstance();
         $deleted = $db->exec("
             DELETE FROM email_queue 
-            WHERE status IN ('failed', 'cancelled') 
-               OR (status = 'processing' AND (locked_at < datetime('now', '-5 minutes') OR locked_at IS NULL))
+            WHERE status IN ('failed', 'cancelled', 'retry') 
+               OR (status = 'processing' AND (locked_at < datetime('now', '-2 minutes') OR locked_at IS NULL))
         ");
         AuditLog::log('clear_failed_queue', 'email_queue', null, ['deleted' => $deleted]);
-        Session::setFlash('success', "Cleared {$deleted} failed, cancelled, and timed-out queue jobs.");
-        Response::redirect('/queue');
+        Session::setFlash('success', "Flushed {$deleted} failed/stuck queue jobs.");
+        Response::back();
     }
 
     public function resetStuck(): void
@@ -104,11 +104,11 @@ class QueueController
         $updated = $db->exec("
             UPDATE email_queue 
             SET status = 'pending', locked_at = NULL, locked_by = NULL 
-            WHERE status = 'processing' AND (locked_at < datetime('now', '-5 minutes') OR locked_at IS NULL)
+            WHERE status = 'processing' AND (locked_at < datetime('now', '-2 minutes') OR locked_at IS NULL)
         ");
         AuditLog::log('reset_stuck_queue', 'email_queue', null, ['updated' => $updated]);
         Session::setFlash('success', "Reset {$updated} stuck processing jobs back to pending.");
-        Response::redirect('/queue');
+        Response::back();
     }
 
     public function purgeAll(): void
@@ -117,7 +117,7 @@ class QueueController
         $deleted = $db->exec("DELETE FROM email_queue");
         AuditLog::log('purge_all_queue', 'email_queue', null, ['deleted' => $deleted]);
         Session::setFlash('success', "Purged entire email queue ({$deleted} jobs deleted).");
-        Response::redirect('/queue');
+        Response::back();
     }
 
     public function triggerWorker(): void
