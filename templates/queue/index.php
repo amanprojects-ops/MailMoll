@@ -4,13 +4,24 @@
         <h4 class="fw-bold mb-1">Email Queue Monitor</h4>
         <p class="text-muted small mb-0">Inspect atomic queue states, worker leases, delivery retries, and errors.</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex align-items-center gap-2">
+        <!-- Clear Failed / Stuck Jobs -->
         <form action="<?= url('/queue/clear-failed') ?>" method="POST" class="d-inline m-0">
             <?= csrf_field() ?>
-            <button type="button" class="btn btn-outline-danger btn-sm btn-confirm-delete" data-message="Purge all failed and cancelled jobs from the queue table?">
+            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Purge all failed, cancelled, and timed-out stuck jobs from the queue table?');">
                 <i class="bi bi-trash3 me-1"></i> Clear Failed Jobs
             </button>
         </form>
+
+        <!-- Reset Stuck Jobs -->
+        <form action="<?= url('/queue/reset-stuck') ?>" method="POST" class="d-inline m-0">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-outline-warning btn-sm" onclick="return confirm('Reset all timed-out stuck processing jobs back to pending?');" title="Reset stuck processing locks">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Stuck
+            </button>
+        </form>
+
+        <!-- Trigger Worker -->
         <button class="btn btn-primary btn-sm" id="runWorkerBtn">
             <i class="bi bi-play-circle-fill me-1"></i> Trigger Worker Now
         </button>
