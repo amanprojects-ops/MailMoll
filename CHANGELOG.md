@@ -4,6 +4,19 @@ All notable changes, bug fixes, features, and resolved issues for MailFlow are d
 
 ---
 
+## [Release 2.0.1] - Clean Root URL Routing & Apache Direct Access (2026-11-03)
+
+### 🚀 Enhancements & Architecture Updates
+- **Eliminated `/public/` from URL**: Users can now access the full SaaS platform directly at `http://localhost/MailMoll/` (and all routes like `/login`, `/dashboard`, `/queue`, etc.) without requiring `/public/` in the browser URL.
+- **Root Front Controller (`index.php`)**: Added root-level front controller forwarding requests directly to the application kernel.
+- **Root Rewrite Engine (`.htaccess`)**: Upgraded Apache mod_rewrite rules to proxy `/assets/...` directly to `public/assets/` and fallback clean routes through root `index.php`.
+- **Intelligent Subfolder Path Normalizer (`app/Helpers/Router.php`)**: Enhanced `Router::dispatch()` to dynamically detect and strip subdirectory paths (`/MailMoll`, `/mailflow`, etc.) whether invoked via root `index.php` or `public/index.php`.
+- **Normalized URL & Asset Helpers (`app/Helpers/helpers.php`)**: Updated `url()` and `asset()` helpers to guarantee clean URL generation without trailing `/public/`.
+- **Environment & Configuration Update (`.env`, `.env.example`, `config/app.php`)**: Updated base `APP_URL` default to `http://localhost/MailMoll`.
+- **Backward Compatibility**: Existing bookmarks or requests starting with `/public/...` continue to function seamlessly.
+
+---
+
 ## [Release 2.0.0] - Master SaaS Transformation & Enterprise Upgrade (2026-11-02)
 
 ### 🚀 Major Feature Additions
