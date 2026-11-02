@@ -1,3 +1,14 @@
+<?php
+$activeList = null;
+if (!empty($selectedList)) {
+    foreach ($lists as $l) {
+        if ($l['id'] == $selectedList) {
+            $activeList = $l;
+            break;
+        }
+    }
+}
+?>
 <!-- Page Header -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
@@ -53,6 +64,9 @@
                             <span class="badge <?= $selectedList == $l['id'] ? 'bg-light text-dark' : 'bg-primary bg-opacity-10 text-primary' ?> rounded-pill">
                                 <?= $l['total_contacts'] ?>
                             </span>
+                            <button type="button" class="btn btn-link btn-sm p-0 <?= $selectedList == $l['id'] ? 'text-white' : 'text-primary' ?> btn-rename-list" data-bs-toggle="modal" data-bs-target="#editListModal" data-id="<?= $l['id'] ?>" data-name="<?= e($l['name']) ?>" data-description="<?= e($l['description'] ?? '') ?>" title="Rename list '<?= e($l['name']) ?>'">
+                                <i class="bi bi-pencil"></i>
+                            </button>
                             <form action="<?= url('/contacts/lists/delete/' . $l['id']) ?>" method="POST" class="d-inline m-0">
                                 <?= csrf_field() ?>
                                 <button type="button" class="btn btn-link btn-sm p-0 <?= $selectedList == $l['id'] ? 'text-white' : 'text-danger' ?> btn-confirm-delete" data-message="Delete list '<?= e($l['name']) ?>'?">
@@ -69,6 +83,47 @@
     <!-- Contacts Table Column -->
     <div class="col-lg-9">
         <div class="card shadow-sm border-0">
+            <?php if ($activeList): ?>
+                <div class="card-header bg-white py-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-folder2-open text-primary"></i>
+                                <span><?= e($activeList['name']) ?></span>
+                            </h5>
+                            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill"><?= $activeList['total_contacts'] ?> subscribers</span>
+                        </div>
+                        <?php if (!empty($activeList['description'])): ?>
+                            <div class="text-muted small mt-1"><?= e($activeList['description']) ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#editListModal" 
+                            data-id="<?= $activeList['id'] ?>" 
+                            data-name="<?= e($activeList['name']) ?>" 
+                            data-description="<?= e($activeList['description'] ?? '') ?>">
+                            <i class="bi bi-pencil-square"></i> Rename List
+                        </button>
+                        <form action="<?= url('/contacts/lists/delete/' . $activeList['id']) ?>" method="POST" class="d-inline m-0">
+                            <?= csrf_field() ?>
+                            <button type="button" class="btn btn-outline-danger btn-sm btn-confirm-delete" data-message="Delete list '<?= e($activeList['name']) ?>'?">
+                                <i class="bi bi-trash"></i> Delete List
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-people text-secondary"></i>
+                            <span>All Contacts Pool</span>
+                        </h5>
+                        <span class="badge bg-secondary rounded-pill"><?= count($contacts) ?> subscribers</span>
+                    </div>
+                    <span class="text-muted small">Showing up to 500 recent contacts</span>
+                </div>
+            <?php endif; ?>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0 datatable">
@@ -191,6 +246,37 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary btn-sm">Create List</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Rename / Edit List -->
+<div class="modal fade" id="editListModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content shadow">
+            <form id="editListForm" action="" method="POST">
+                <?= csrf_field() ?>
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-pencil-square text-primary me-1"></i> Rename / Edit Contact List
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">List Name *</label>
+                        <input type="text" name="name" id="editListNameInput" class="form-control" placeholder="e.g. VIP Customers, Newsletter" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Description</label>
+                        <textarea name="description" id="editListDescInput" class="form-control" rows="2" placeholder="List description or source details"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -558,5 +644,22 @@ document.addEventListener('DOMContentLoaded', function () {
             newNameInput.value = '';
         }
     });
+
+    // Rename / Edit List Modal Population
+    const editListModal = document.getElementById('editListModal');
+    if (editListModal) {
+        editListModal.addEventListener('show.bs.modal', function(event) {
+            const btn = event.relatedTarget;
+            if (!btn) return;
+            const id = btn.getAttribute('data-id');
+            const name = btn.getAttribute('data-name') || '';
+            const desc = btn.getAttribute('data-description') || '';
+
+            const form = document.getElementById('editListForm');
+            form.action = '<?= url("/contacts/lists/update/") ?>/' + id;
+            document.getElementById('editListNameInput').value = name;
+            document.getElementById('editListDescInput').value = desc;
+        });
+    }
 });
 </script>
