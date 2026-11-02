@@ -17,7 +17,7 @@
 </div>
 
 <form action="<?= \App\Helpers\UrlHelper::to('/verify-email/resend') ?>" method="POST">
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+    <?= csrf_field() ?>
     <input type="hidden" name="email" value="<?= htmlspecialchars($_SESSION['verification_email'] ?? '') ?>">
 
     <button type="submit" class="btn btn-outline-light w-100 py-2 fw-semibold mb-3">
