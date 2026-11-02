@@ -92,6 +92,31 @@ class ContactController
         Response::redirect('/contacts');
     }
 
+    public function updateList(int $id): void
+    {
+        $list = ContactList::find($id);
+        if (!$list) {
+            Session::setFlash('error', 'Contact list not found.');
+            Response::redirect('/contacts');
+        }
+
+        $name = trim($_POST['name'] ?? '');
+        if (empty($name)) {
+            Session::setFlash('error', 'List name is required.');
+            Response::redirect('/contacts?list_id=' . $id);
+        }
+
+        ContactList::update($id, [
+            'name' => $name,
+            'description' => trim($_POST['description'] ?? ''),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        AuditLog::log('update_contact_list', 'contact_lists', $id, ['name' => $name]);
+        Session::setFlash('success', "List renamed to '{$name}' successfully.");
+        Response::redirect('/contacts?list_id=' . $id);
+    }
+
     /**
      * AJAX Endpoint: Inspect and preview file structure before importing.
      */
