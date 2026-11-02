@@ -16,7 +16,11 @@ class CsrfMiddleware
 
         // Only enforce for state-changing HTTP verbs
         if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'], true)) {
-            $token = $_POST['_csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+            $token = $_POST['_csrf_token'] 
+                ?? $_POST['csrf_token'] 
+                ?? $_SERVER['HTTP_X_CSRF_TOKEN'] 
+                ?? $_SERVER['HTTP_CSRF_TOKEN'] 
+                ?? null;
 
             if (!Session::validateCsrfToken($token)) {
                 $uri = $_SERVER['REQUEST_URI'] ?? '';
