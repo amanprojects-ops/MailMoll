@@ -18,7 +18,7 @@ $maxExecutionTime = (int)($options['max-time'] ?? 55);
 $startTime = time();
 $worker = new QueueWorkerService();
 
-echo "[" . date('Y-m-d H:i:s') . "] MailMoll Queue Worker started.\n";
+echo "[" . date('Y-m-d H:i:s') . "] MailFlow Queue Worker started.\n";
 
 do {
     try {
