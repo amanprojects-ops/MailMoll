@@ -7,7 +7,7 @@
 </div>
 
 <form action="<?= \App\Helpers\UrlHelper::to('/forgot-password') ?>" method="POST">
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+    <?= csrf_field() ?>
 
     <div class="mb-4">
         <label for="email" class="form-label small fw-semibold text-light">Account Email Address</label>
