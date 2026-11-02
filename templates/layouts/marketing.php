@@ -73,7 +73,7 @@
                     <i class="bi bi-moon-stars-fill fs-6" id="themeIcon"></i>
                 </button>
 
-                <?php if (auth_check()): ?>
+                <?php if (auth_user()): ?>
                     <a href="<?= url('/dashboard') ?>" class="btn btn-outline-primary btn-sm px-3 fw-semibold">
                         <i class="bi bi-grid-fill me-1"></i> Dashboard
                     </a>
