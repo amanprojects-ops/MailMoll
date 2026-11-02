@@ -72,8 +72,10 @@ if (!function_exists('config')) {
 if (!function_exists('url')) {
     function url(string $path = ''): string
     {
-        $root = config('app.url', 'http://localhost/MailMoll/public');
-        $root = rtrim($root, '/');
+        $root = config('app.url', 'http://localhost/MailMoll');
+        $root = rtrim((string)$root, '/');
+        // Always normalize by removing trailing /public if configured
+        $root = preg_replace('#/public$#i', '', $root);
         $path = ltrim($path, '/');
         return $path ? "{$root}/{$path}" : $root;
     }
