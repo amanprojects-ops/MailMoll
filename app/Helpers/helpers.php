@@ -132,3 +132,10 @@ if (!function_exists('auth_user')) {
         return Session::get('user');
     }
 }
+
+if (!function_exists('auth_check')) {
+    function auth_check(): bool
+    {
+        return Session::has('user');
+    }
+}
