@@ -3,11 +3,28 @@
         <h4 class="fw-bold mb-1 text-light"><i class="bi bi-hourglass-split text-warning me-2"></i>Global Cross-Instance Queue</h4>
         <p class="text-secondary small mb-0">Inspect atomic job dispatch across all tenant campaigns and microservice transactional pipelines.</p>
     </div>
-    <div class="d-flex gap-2">
-        <form action="<?= url('/queue/clear-failed') ?>" method="POST" onsubmit="return confirm('Purge failed jobs?');">
+    <div class="d-flex align-items-center gap-2">
+        <!-- Flush Failed / Stuck -->
+        <form action="<?= url('/queue/clear-failed') ?>" method="POST" class="d-inline m-0">
             <?= csrf_field() ?>
-            <button type="submit" class="btn btn-outline-danger btn-sm">
-                <i class="bi bi-trash me-1"></i> Flush Failed
+            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Flush all failed, cancelled, and stuck jobs from the queue?');">
+                <i class="bi bi-trash3 me-1"></i> Flush Failed
+            </button>
+        </form>
+
+        <!-- Reset Stuck -->
+        <form action="<?= url('/queue/reset-stuck') ?>" method="POST" class="d-inline m-0">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-outline-warning btn-sm" onclick="return confirm('Reset all timed-out stuck processing jobs back to pending?');">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Stuck
+            </button>
+        </form>
+
+        <!-- Flush Entire Queue -->
+        <form action="<?= url('/queue/purge-all') ?>" method="POST" class="d-inline m-0">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('CRITICAL: Purge ALL jobs from the entire queue table?');">
+                <i class="bi bi-fire me-1"></i> Flush All Queue
             </button>
         </form>
     </div>
