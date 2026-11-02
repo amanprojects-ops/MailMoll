@@ -8,6 +8,7 @@ use App\Controllers\SmtpController;
 use App\Controllers\CampaignController;
 use App\Controllers\QueueController;
 use App\Controllers\AnalyticsController;
+use App\Controllers\ContactController;
 
 Router::group(['middleware' => [AuthMiddleware::class]], function () {
     // Live SMTP connection test
@@ -21,4 +22,7 @@ Router::group(['middleware' => [AuthMiddleware::class]], function () {
 
     // Analytics Chart Data
     Router::get('/api/analytics/data', [AnalyticsController::class, 'apiData']);
+
+    // Contact Import Preview
+    Router::post('/api/contacts/import-preview', [ContactController::class, 'previewImport'], [CsrfMiddleware::class]);
 });
