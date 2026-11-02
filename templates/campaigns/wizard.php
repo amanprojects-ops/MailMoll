@@ -2,8 +2,8 @@
     <a href="<?= url('/campaigns') ?>" class="text-decoration-none text-muted small">
         <i class="bi bi-arrow-left me-1"></i> Back to Campaigns
     </a>
-    <h4 class="fw-bold mt-2 mb-1">Create New Campaign</h4>
-    <p class="text-muted small">Configure and launch a compliant email broadcast in 6 guided steps.</p>
+    <h4 class="fw-bold mt-2 mb-1"><?= isset($campaign) ? 'Edit Draft Campaign: ' . e($campaign['title']) : 'Create New Campaign' ?></h4>
+    <p class="text-muted small"><?= isset($campaign) ? 'Modify settings, recipient lists, or content for this draft campaign.' : 'Configure and launch a compliant email broadcast in 6 guided steps.' ?></p>
 </div>
 
 <!-- Wizard Step Navigation -->
@@ -34,7 +34,7 @@
     </div>
 </div>
 
-<form action="<?= url('/campaigns/store') ?>" method="POST" id="campaignWizardForm">
+<form action="<?= isset($campaign) ? url('/campaigns/update/' . $campaign['id']) : url('/campaigns/store') ?>" method="POST" id="campaignWizardForm">
     <?= csrf_field() ?>
     <input type="hidden" name="body_html" id="hidden_body_html" value="">
     <input type="hidden" name="launch_immediately" id="hidden_launch_immediately" value="0">
@@ -46,12 +46,12 @@
             <div class="row g-3">
                 <div class="col-md-12">
                     <label class="form-label small fw-semibold">Internal Campaign Title *</label>
-                    <input type="text" name="title" id="camp_title" class="form-control" placeholder="e.g. Q4 Product Feature Announcement" required>
+                    <input type="text" name="title" id="camp_title" class="form-control" placeholder="e.g. Q4 Product Feature Announcement" value="<?= isset($campaign) ? e($campaign['title']) : '' ?>" required>
                     <div class="form-text">Used internally for reporting and audit logs.</div>
                 </div>
                 <div class="col-md-12">
                     <label class="form-label small fw-semibold">Email Subject Line *</label>
-                    <input type="text" name="subject" id="camp_subject" class="form-control" placeholder="e.g. Introducing our new features, {{first_name}}!" required>
+                    <input type="text" name="subject" id="camp_subject" class="form-control" placeholder="e.g. Introducing our new features, {{first_name}}!" value="<?= isset($campaign) ? e($campaign['subject']) : '' ?>" required>
                     <div class="form-text">Supports placeholders like <code>{{first_name}}</code>.</div>
                 </div>
             </div>
@@ -68,36 +68,36 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label small fw-semibold">Sender Display Name *</label>
-                    <input type="text" name="sender_name" id="camp_sender_name" class="form-control" value="<?= e(auth_user()['name'] ?? 'MailMoll Team') ?>" required>
+                    <input type="text" name="sender_name" id="camp_sender_name" class="form-control" value="<?= isset($campaign) ? e($campaign['sender_name']) : e(auth_user()['name'] ?? 'MailMoll Team') ?>" required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label small fw-semibold">Sender Email Address *</label>
-                    <input type="email" name="sender_email" id="camp_sender_email" class="form-control" value="updates@mailmoll.local" required>
+                    <input type="email" name="sender_email" id="camp_sender_email" class="form-control" value="<?= isset($campaign) ? e($campaign['sender_email']) : 'updates@mailmoll.local' ?>" required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label small fw-semibold">Reply-To Address (Optional)</label>
-                    <input type="email" name="reply_to" class="form-control" placeholder="support@domain.com">
+                    <input type="email" name="reply_to" class="form-control" placeholder="support@domain.com" value="<?= isset($campaign) ? e($campaign['reply_to'] ?? '') : '' ?>">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label small fw-semibold">Routing Type *</label>
                     <select name="routing_type" id="camp_routing_type" class="form-select" onchange="toggleRoutingSelection()">
-                        <option value="group" selected>SMTP Group (Balanced Rotation)</option>
-                        <option value="single_smtp">Dedicated SMTP Account</option>
+                        <option value="group" <?= (isset($campaign) && $campaign['routing_type'] === 'group') || !isset($campaign) ? 'selected' : '' ?>>SMTP Group (Balanced Rotation)</option>
+                        <option value="single_smtp" <?= isset($campaign) && $campaign['routing_type'] === 'single_smtp' ? 'selected' : '' ?>>Dedicated SMTP Account</option>
                     </select>
                 </div>
-                <div class="col-md-12" id="group_selection_div">
+                <div class="col-md-12 <?= (isset($campaign) && $campaign['routing_type'] === 'single_smtp') ? 'd-none' : '' ?>" id="group_selection_div">
                     <label class="form-label small fw-semibold">Select SMTP Pool / Group *</label>
                     <select name="smtp_group_id" class="form-select">
                         <?php foreach ($smtpGroups as $grp): ?>
-                            <option value="<?= $grp['id'] ?>"><?= e($grp['name']) ?> (Strategy: <?= strtoupper($grp['routing_strategy']) ?>)</option>
+                            <option value="<?= $grp['id'] ?>" <?= isset($campaign) && $campaign['smtp_group_id'] == $grp['id'] ? 'selected' : '' ?>><?= e($grp['name']) ?> (Strategy: <?= strtoupper($grp['routing_strategy']) ?>)</option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-12 d-none" id="single_smtp_selection_div">
+                <div class="col-md-12 <?= (isset($campaign) && $campaign['routing_type'] === 'single_smtp') ? '' : 'd-none' ?>" id="single_smtp_selection_div">
                     <label class="form-label small fw-semibold">Select Dedicated SMTP Node *</label>
                     <select name="smtp_account_id" id="camp_smtp_account_id" class="form-select">
                         <?php foreach ($smtpAccounts as $acc): ?>
-                            <option value="<?= $acc['id'] ?>"><?= e($acc['name']) ?> (Host: <?= e($acc['host']) ?> | Daily: <?= $acc['daily_limit'] ?>)</option>
+                            <option value="<?= $acc['id'] ?>" <?= isset($campaign) && $campaign['smtp_account_id'] == $acc['id'] ? 'selected' : '' ?>><?= e($acc['name']) ?> (Host: <?= e($acc['host']) ?> | Daily: <?= $acc['daily_limit'] ?>)</option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -127,12 +127,18 @@
                         No contact lists available. <a href="<?= url('/contacts') ?>" target="_blank">Create a list</a> first.
                     </div>
                 <?php else: ?>
+                    <?php 
+                    $selectedLists = [];
+                    if (isset($campaign) && !empty($campaign['target_list_ids'])) {
+                        $selectedLists = json_decode($campaign['target_list_ids'], true) ?: [];
+                    }
+                    ?>
                     <div class="d-flex flex-column gap-2">
                         <?php foreach ($contactLists as $list): ?>
                             <div class="p-3 border rounded d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="form-check">
-                                        <input class="form-check-input target-list-checkbox" type="checkbox" name="target_lists[]" value="<?= $list['id'] ?>" id="list_chk_<?= $list['id'] ?>">
+                                        <input class="form-check-input target-list-checkbox" type="checkbox" name="target_lists[]" value="<?= $list['id'] ?>" id="list_chk_<?= $list['id'] ?>" <?= in_array($list['id'], $selectedLists) ? 'checked' : '' ?>>
                                         <label class="form-check-label fw-semibold small" for="list_chk_<?= $list['id'] ?>">
                                             <?= e($list['name']) ?>
                                         </label>
@@ -168,7 +174,7 @@
                     <select id="templateLoaderSelect" class="form-select" onchange="loadSelectedTemplate()">
                         <option value="">-- Choose a reusable template or compose custom --</option>
                         <?php foreach ($templates as $tpl): ?>
-                            <option value="<?= $tpl['id'] ?>" data-html="<?= htmlspecialchars($tpl['body_html']) ?>" data-subject="<?= htmlspecialchars($tpl['subject_default'] ?? '') ?>">
+                            <option value="<?= $tpl['id'] ?>" data-html="<?= htmlspecialchars($tpl['body_html']) ?>" data-subject="<?= htmlspecialchars($tpl['subject_default'] ?? '') ?>" <?= (isset($campaign) && $campaign['template_id'] == $tpl['id']) ? 'selected' : '' ?>>
                                 <?= e($tpl['name']) ?>
                             </option>
                         <?php endforeach; ?>
@@ -284,9 +290,13 @@
         <div class="wizard-step-content d-none" id="step-5">
             <h5 class="fw-bold mb-3"><i class="bi bi-calendar-event text-primary me-2"></i> Step 5: Dispatch Schedule</h5>
             
+            <?php 
+            $hasSchedule = isset($campaign) && !empty($campaign['scheduled_at']);
+            $schedTimeVal = $hasSchedule ? date('Y-m-d H:i', strtotime($campaign['scheduled_at'])) : '';
+            ?>
             <div class="mb-4">
                 <div class="form-check mb-3">
-                    <input class="form-check-input" type="radio" name="schedule_option" id="sched_now" value="now" checked onchange="toggleScheduleDate(false)">
+                    <input class="form-check-input" type="radio" name="schedule_option" id="sched_now" value="now" <?= !$hasSchedule ? 'checked' : '' ?> onchange="toggleScheduleDate(false)">
                     <label class="form-check-label fw-semibold" for="sched_now">
                         Send Immediately
                     </label>
@@ -294,7 +304,7 @@
                 </div>
 
                 <div class="form-check">
-                    <input class="form-check-input" type="radio" name="schedule_option" id="sched_later" value="later" onchange="toggleScheduleDate(true)">
+                    <input class="form-check-input" type="radio" name="schedule_option" id="sched_later" value="later" <?= $hasSchedule ? 'checked' : '' ?> onchange="toggleScheduleDate(true)">
                     <label class="form-check-label fw-semibold" for="sched_later">
                         Schedule for Later
                     </label>
@@ -302,9 +312,9 @@
                 </div>
             </div>
 
-            <div class="mb-3 d-none" id="scheduleDateContainer">
+            <div class="mb-3 <?= $hasSchedule ? '' : 'd-none' ?>" id="scheduleDateContainer">
                 <label class="form-label small fw-semibold">Dispatch Date & Time *</label>
-                <input type="text" name="schedule_time" id="schedule_time" class="form-control datetimepicker" placeholder="Select future date & time">
+                <input type="text" name="schedule_time" id="schedule_time" class="form-control datetimepicker" placeholder="Select future date & time" value="<?= e($schedTimeVal) ?>">
             </div>
 
             <div class="d-flex justify-content-between mt-4">
@@ -369,10 +379,10 @@
                 </button>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-outline-primary btn-sm px-4" onclick="submitWizard(false)">
-                        Save as Draft
+                        <i class="bi bi-save me-1"></i> <?= isset($campaign) ? 'Update Draft' : 'Save as Draft' ?>
                     </button>
                     <button type="button" class="btn btn-success btn-sm px-4" onclick="submitWizard(true)">
-                        <i class="bi bi-rocket-takeoff-fill me-1"></i> Confirm & Launch Broadcast
+                        <i class="bi bi-rocket-takeoff-fill me-1"></i> <?= isset($campaign) ? 'Update & Launch Broadcast' : 'Confirm & Launch Broadcast' ?>
                     </button>
                 </div>
             </div>
@@ -516,9 +526,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const textarea = document.getElementById('campaignCodeMirrorTextarea');
 
     // Default template or sample content if empty
-    const initialHtml = `<p>Hello <strong>{{first_name}}</strong>,</p><p>We are excited to share our latest news with you. Here is your personalized update.</p><p>Best regards,<br>MailMoll Team</p>`;
+    const initialHtml = <?= isset($campaign) ? json_encode($campaign['body_html']) : '`<p>Hello <strong>{{first_name}}</strong>,</p><p>We are excited to share our latest news with you. Here is your personalized update.</p><p>Best regards,<br>MailMoll Team</p>`' ?>;
     if (visualCanvas) {
-        visualCanvas.innerHTML = initialHtml;
+        visualCanvas.innerHTML = parseCampaignHtmlForVisual(initialHtml);
     }
 
     if (textarea) {
