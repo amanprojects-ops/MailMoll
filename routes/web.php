@@ -16,6 +16,23 @@ use App\Controllers\LogController;
 use App\Controllers\SuppressionController;
 use App\Controllers\AnalyticsController;
 use App\Controllers\SettingsController;
+use App\Controllers\PublicController;
+
+// Public Marketing Pages
+Router::get('/', [PublicController::class, 'home']);
+Router::get('/features', [PublicController::class, 'features']);
+Router::get('/solutions', [PublicController::class, 'solutions']);
+Router::get('/pricing', [PublicController::class, 'pricing']);
+Router::get('/about', [PublicController::class, 'about']);
+Router::get('/contact', [PublicController::class, 'contact']);
+Router::post('/contact', [PublicController::class, 'submitContact'], [CsrfMiddleware::class]);
+Router::post('/newsletter/subscribe', [PublicController::class, 'subscribeNewsletter'], [CsrfMiddleware::class]);
+Router::get('/docs', [PublicController::class, 'docs']);
+Router::get('/faq', [PublicController::class, 'faq']);
+Router::get('/privacy-policy', [PublicController::class, 'privacy']);
+Router::get('/terms', [PublicController::class, 'terms']);
+Router::get('/sitemap.xml', [PublicController::class, 'sitemap']);
+Router::get('/robots.txt', [PublicController::class, 'robots']);
 
 // Public & Guest Routes
 Router::get('/login', [AuthController::class, 'showLogin'], [GuestMiddleware::class]);
@@ -31,7 +48,7 @@ Router::post('/unsubscribe', [SuppressionController::class, 'handleUnsubscribe']
 Router::group(['middleware' => [AuthMiddleware::class]], function () {
 
     // Dashboard Overview
-    Router::get('/', [DashboardController::class, 'index']);
+    Router::get('/dashboard', [DashboardController::class, 'index']);
 
     // SMTP Management
     Router::get('/smtp', [SmtpController::class, 'index']);
