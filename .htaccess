@@ -12,7 +12,14 @@
     RewriteRule ^templates/ - [F,L,NC]
     RewriteRule ^cron/ - [F,L,NC]
 
-    # Redirect root requests to /public/
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(.*)$ public/$1 [L]
+    # Serve static assets directly from public/assets/ if requested via /assets/...
+    RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+
+    # If the file or directory exists in root, serve directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Route all application requests through root index.php
+    RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
