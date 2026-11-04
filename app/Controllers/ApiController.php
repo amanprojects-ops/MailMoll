@@ -127,7 +127,7 @@ class ApiController
         $stmt = $db->prepare("
             SELECT id, campaign_id, selected_smtp_id, recipient_email, recipient_name,
                    subject, status, attempts, max_attempts, last_error, scheduled_at,
-                   sent_at, created_at
+                   updated_at, created_at
             FROM email_queue
             WHERE id = :id
             LIMIT 1
