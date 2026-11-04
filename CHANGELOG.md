@@ -4,6 +4,18 @@ All notable changes, bug fixes, features, and resolved issues for MailFlow are d
 
 ---
 
+## [Release 2.0.3] - CSS Loading Reliability & Asset Cache-Busting Pipeline (2026-11-04)
+
+### 🎨 Asset Delivery & Styling Enhancements
+- **Physical Root Assets Mirroring**: Mirrored `public/assets/` into root `/assets/` directory (`assets/css/marketing.css`, `assets/css/dashboard.css`, `assets/js/app.js`, `assets/images/`), allowing Apache and web servers to serve static files directly from disk without rewrite overhead.
+- **Cache-Busting Asset Versioning**: Enhanced `asset()` helper in `app/Helpers/helpers.php` to automatically append `?v={filemtime}` query parameter, ensuring clients immediately load updated stylesheets and scripts without being blocked by stale browser cache.
+- **Static Asset Delivery Fallback in Front Controller**: Upgraded `app/Helpers/Router.php` to detect any static asset requests reaching `index.php` and stream them with appropriate HTTP status 200, Content-Type (`text/css`, `text/javascript`, `image/*`), and caching headers rather than throwing 404 HTML pages.
+- **Unified Master Layout Stylesheets**:
+  - `templates/layouts/main.php`: Linked both `marketing.css` (design system tokens) and `dashboard.css` (analytics, stat cards, status badges).
+  - `templates/layouts/admin.php`: Added `dashboard.css` alongside `marketing.css` to guarantee component styling across Super Admin.
+
+---
+
 ## [Release 2.0.2] - Dynamic Redirect URLs, Clean Architecture & REST API v1 Suite (2026-11-04)
 
 ### 🚀 Enhancements, Architecture & API Updates
