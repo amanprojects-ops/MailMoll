@@ -31,7 +31,8 @@
     <!-- Toastify CSS -->
     <link href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" rel="stylesheet">
 
-    <!-- MailFlow Dashboard CSS -->
+    <!-- MailFlow Design Tokens & Dashboard CSS -->
+    <link href="<?= asset('css/marketing.css') ?>" rel="stylesheet">
     <link href="<?= asset('css/dashboard.css') ?>" rel="stylesheet">
 
     <script>
