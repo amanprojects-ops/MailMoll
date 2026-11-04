@@ -16,17 +16,31 @@ class ApiAuthMiddleware
         Session::start();
 
         // 1. Extract Bearer Token or X-API-Key
-        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] 
-            ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] 
-            ?? '';
+        $authHeader = '';
+        if (function_exists('getallheaders')) {
+            $all = getallheaders();
+            $authHeader = $all['Authorization'] ?? $all['authorization'] ?? '';
+            if (empty($apiKey) && !empty($all['X-API-Key'])) {
+                $apiKey = trim((string)$all['X-API-Key']);
+            } elseif (empty($apiKey) && !empty($all['x-api-key'])) {
+                $apiKey = trim((string)$all['x-api-key']);
+            }
+        }
 
-        $apiKey = '';
-        if (preg_match('/Bearer\s+(\S+)/i', $authHeader, $matches)) {
-            $apiKey = trim($matches[1]);
-        } elseif (!empty($_SERVER['HTTP_X_API_KEY'])) {
-            $apiKey = trim((string)$_SERVER['HTTP_X_API_KEY']);
-        } elseif (!empty($_GET['api_key'])) {
-            $apiKey = trim((string)$_GET['api_key']);
+        if (empty($authHeader)) {
+            $authHeader = $_SERVER['HTTP_AUTHORIZATION'] 
+                ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] 
+                ?? '';
+        }
+
+        if (empty($apiKey)) {
+            if (preg_match('/Bearer\s+(\S+)/i', $authHeader, $matches)) {
+                $apiKey = trim($matches[1]);
+            } elseif (!empty($_SERVER['HTTP_X_API_KEY'])) {
+                $apiKey = trim((string)$_SERVER['HTTP_X_API_KEY']);
+            } elseif (!empty($_GET['api_key'])) {
+                $apiKey = trim((string)$_GET['api_key']);
+            }
         }
 
         // 2. If API Key is present, authenticate against api_keys table
