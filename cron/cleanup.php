@@ -26,7 +26,19 @@ try {
     ");
     echo "[INFO] Pruned {$prunedAudit} old audit logs.\n";
 
-    // 3. VACUUM SQLite database if needed to reclaim space
+    // 3. Prune expired password reset tokens (> 48 hours)
+    $prunedTokens = $db->exec("
+        DELETE FROM password_resets WHERE created_at < datetime('now', '-48 hours')
+    ");
+    echo "[INFO] Pruned {$prunedTokens} expired password reset tokens.\n";
+
+    // 4. Prune expired email verification tokens (> 48 hours)
+    $prunedVerifs = $db->exec("
+        DELETE FROM email_verifications WHERE created_at < datetime('now', '-48 hours')
+    ");
+    echo "[INFO] Pruned {$prunedVerifs} expired email verification tokens.\n";
+
+    // 5. Optimize SQLite database
     $db->exec("PRAGMA optimize;");
     echo "[INFO] SQLite pragmas optimized successfully.\n";
 
