@@ -9,6 +9,16 @@ class CsrfMiddleware
 {
     public function handle(): void
     {
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+
+        // Stateless REST API requests (/api/v1/ or with Bearer/API token) are exempt from browser session CSRF
+        if (str_contains($uri, '/api/v1/') 
+            || !empty($_SERVER['HTTP_AUTHORIZATION']) 
+            || !empty($_SERVER['HTTP_X_API_KEY'])
+        ) {
+            return;
+        }
+
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         if (isset($_POST['_method'])) {
             $method = strtoupper($_POST['_method']);
@@ -23,7 +33,6 @@ class CsrfMiddleware
                 ?? null;
 
             if (!Session::validateCsrfToken($token)) {
-                $uri = $_SERVER['REQUEST_URI'] ?? '';
                 if (str_contains($uri, '/api/')) {
                     Response::error('Invalid or expired CSRF token.', 403);
                 }
