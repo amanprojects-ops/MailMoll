@@ -1,0 +1,371 @@
+/**
+ * MailFlow – Professional Multi-SMTP Email Management SaaS
+ * Public Marketing Website & Design System
+ * Inspired by Stripe, Resend, and Linear
+ */
+
+:root {
+    --primary: #6366F1;
+    --primary-hover: #4F46E5;
+    --primary-light: #EEF2FF;
+    --secondary: #64748B;
+    --secondary-hover: #475569;
+    --secondary-light: #F8FAFC;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --info: #0EA5E9;
+
+    --bg-page: #FFFFFF;
+    --bg-surface: #F8FAFC;
+    --bg-card: #FFFFFF;
+    --border-color: rgba(226, 232, 240, 0.9);
+    --border-hover: rgba(99, 102, 241, 0.3);
+    --text-primary: #0F172A;
+    --text-muted: #64748B;
+    --text-subtle: #94A3B8;
+
+    --navbar-bg: rgba(255, 255, 255, 0.85);
+    --navbar-border: rgba(226, 232, 240, 0.8);
+    --hero-glow: radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+}
+
+[data-bs-theme="dark"] {
+    --bg-page: #0B0F19;
+    --bg-surface: #111827;
+    --bg-card: #1E293B;
+    --border-color: rgba(51, 65, 85, 0.7);
+    --border-hover: rgba(99, 102, 241, 0.5);
+    --text-primary: #F8FAFC;
+    --text-muted: #94A3B8;
+    --text-subtle: #64748B;
+
+    --navbar-bg: rgba(11, 15, 25, 0.85);
+    --navbar-border: rgba(51, 65, 85, 0.8);
+    --hero-glow: radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.25) 0%, rgba(11, 15, 25, 0) 70%);
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ==================================================
+   NAVBAR (Glassmorphic)
+================================================== */
+.navbar-marketing {
+    background: var(--navbar-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--navbar-border);
+    transition: all 0.2s ease;
+    z-index: 1040;
+}
+
+.brand-logo-mark {
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    color: #FFFFFF;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.35);
+}
+
+.navbar-marketing .nav-link {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.925rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 6px;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.navbar-marketing .nav-link:hover,
+.navbar-marketing .nav-link.active {
+    color: var(--text-primary);
+    background-color: rgba(99, 102, 241, 0.08);
+}
+
+/* ==================================================
+   HERO SECTION
+================================================== */
+.hero-section {
+    position: relative;
+    padding: 6rem 0 4.5rem;
+    background-image: var(--hero-glow);
+    overflow: hidden;
+}
+
+.hero-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 9999px;
+    background-color: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    font-size: 0.825rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+}
+
+.hero-title .gradient-text {
+    background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-subheading {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    max-width: 720px;
+    margin: 0 auto 2.5rem;
+    font-weight: 400;
+}
+
+/* Hero Realistic Dashboard Preview */
+.hero-preview-wrapper {
+    position: relative;
+    max-width: 1080px;
+    margin: 3rem auto 0;
+    border-radius: 16px;
+    padding: 10px;
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.2) 0%, rgba(226, 232, 240, 0.1) 100%);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--border-color);
+}
+
+.hero-preview-inner {
+    border-radius: 12px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+/* ==================================================
+   TRUST SECTION
+================================================== */
+.trust-section {
+    padding: 2.5rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-surface);
+}
+
+.trust-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.trust-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: rgba(16, 185, 129, 0.12);
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+}
+
+/* ==================================================
+   FEATURE CARDS
+================================================== */
+.feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 2rem;
+    height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    box-shadow: var(--card-shadow);
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
+    border-color: var(--border-hover);
+}
+
+.feature-icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.icon-box-primary { background: rgba(99, 102, 241, 0.12); color: var(--primary); }
+.icon-box-success { background: rgba(16, 185, 129, 0.12); color: var(--success); }
+.icon-box-warning { background: rgba(245, 158, 11, 0.12); color: var(--warning); }
+.icon-box-info { background: rgba(14, 165, 233, 0.12); color: var(--info); }
+.icon-box-danger { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
+
+/* ==================================================
+   HOW IT WORKS STEPS
+================================================== */
+.step-number-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+}
+
+/* ==================================================
+   COMPARISON TABLE
+================================================== */
+.comparison-table-wrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.comparison-table th {
+    background-color: var(--bg-surface);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1.15rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.comparison-table td {
+    padding: 1rem 1.25rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.925rem;
+}
+
+/* ==================================================
+   FAQ ACCORDION
+================================================== */
+.faq-accordion .accordion-item {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px !important;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+
+.faq-accordion .accordion-button {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1.05rem;
+    padding: 1.15rem 1.25rem;
+    box-shadow: none;
+}
+
+.faq-accordion .accordion-button:not(.collapsed) {
+    color: var(--primary);
+    background-color: rgba(99, 102, 241, 0.05);
+}
+
+/* ==================================================
+   CTA BANNER
+================================================== */
+.cta-banner {
+    background: linear-gradient(135deg, #4338CA 0%, #6366F1 50%, #4F46E5 100%);
+    border-radius: 20px;
+    color: #FFFFFF;
+    padding: 4.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.3);
+}
+
+/* ==================================================
+   FOOTER
+================================================== */
+.footer-marketing {
+    background-color: var(--bg-surface);
+    border-top: 1px solid var(--border-color);
+    padding: 4.5rem 0 2rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.footer-marketing h6 {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.25rem;
+}
+
+.footer-marketing a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.footer-marketing a:hover {
+    color: var(--primary);
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    box-shadow: 0 6px 10px -1px rgba(99, 102, 241, 0.35);
+}
+
+.btn-white {
+    background-color: #FFFFFF;
+    color: #0F172A;
+    border-color: rgba(226, 232, 240, 0.9);
+}
+
+.btn-white:hover {
+    background-color: #F8FAFC;
+    color: var(--primary);
+}
