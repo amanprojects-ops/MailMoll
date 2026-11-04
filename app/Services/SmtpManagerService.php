@@ -125,7 +125,7 @@ class SmtpManagerService
 
         try {
             $mail->CharSet = PHPMailer::CHARSET_UTF8;
-            $mail->Timeout = 25;
+            $mail->Timeout = 10;
             $this->configureMailer($mail, $account);
 
             // Sender details
