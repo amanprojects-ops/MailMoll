@@ -59,4 +59,4 @@ do {
 
 } while ($isDaemon);
 
-echo "[" . date('Y-m-d H:i:s') . "] MailMoll Queue Worker completed.\n";
+echo "[" . date('Y-m-d H:i:s') . "] MailFlow Queue Worker completed.\n";

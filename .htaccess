@@ -4,8 +4,11 @@
     # Prevent directory listing
     Options -Indexes
 
+    # Pass HTTP Authorization Header to PHP
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
     # Block access to hidden files and sensitive directories
-    RewriteRule ^(\.env|\.git|composer\.(json|lock)|plan\.txt) - [F,L,NC]
+    RewriteRule ^(\.env|\.git|composer\.(json|lock)) - [F,L,NC]
     RewriteRule ^storage/ - [F,L,NC]
     RewriteRule ^app/ - [F,L,NC]
     RewriteRule ^config/ - [F,L,NC]

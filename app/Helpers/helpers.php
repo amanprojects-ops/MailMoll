@@ -72,7 +72,34 @@ if (!function_exists('config')) {
 if (!function_exists('url')) {
     function url(string $path = ''): string
     {
-        $root = config('app.url', 'http://localhost/MailMoll');
+        if (isset($_SERVER['HTTP_HOST']) && !empty($_SERVER['HTTP_HOST'])) {
+            $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+                || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+            $scheme = $isHttps ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'];
+
+            // Determine subfolder dynamically from SCRIPT_NAME or configured app.url
+            $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+            $subfolder = preg_replace('#/public/?$#i', '', $scriptDir);
+            if ($subfolder === '/' || $subfolder === '.' || $subfolder === '\\') {
+                $subfolder = '';
+            }
+
+            // Fallback to configured path if scriptDir is empty but app.url has path
+            if (empty($subfolder)) {
+                $configuredPath = parse_url(config('app.url', ''), PHP_URL_PATH);
+                if (!empty($configuredPath) && $configuredPath !== '/') {
+                    $subfolder = preg_replace('#/public/?$#i', '', $configuredPath);
+                }
+            }
+
+            $root = "{$scheme}://{$host}" . $subfolder;
+        } else {
+            // CLI fallback (workers, cron, CLI maintenance)
+            $root = config('app.url', 'http://localhost/MailMoll');
+        }
+
         $root = rtrim((string)$root, '/');
         // Always normalize by removing trailing /public if configured
         $root = preg_replace('#/public$#i', '', $root);

@@ -4,6 +4,28 @@ All notable changes, bug fixes, features, and resolved issues for MailFlow are d
 
 ---
 
+## [Release 2.0.2] - Dynamic Redirect URLs, Clean Architecture & REST API v1 Suite (2026-11-04)
+
+### 🚀 Enhancements, Architecture & API Updates
+- **Removed Obsolete Plan Files**: Deleted legacy `mailmoll-implementation-plan.md` and `plan.txt` files and cleaned `.htaccess` protection rules.
+- **Dynamic URL & Redirect Resolution**:
+  - Upgraded `url()` and `asset()` in `app/Helpers/helpers.php` to dynamically detect active protocol (`http`/`https`), host (including custom ports such as 8080/8000), and base directory path.
+  - Public, admin, and dashboard redirects (`Response::redirect()` and `Response::back()`) are now 100% dynamic and adapt to any domain, IP, or port without hardcoded lock-in to `localhost`.
+- **REST API v1 Suite**:
+  - Created `app/Middleware/ApiAuthMiddleware.php` with Bearer token authentication (`Authorization: Bearer mflw_live_...`), header fallback (`X-API-Key`), and SHA-256 hash lookup in `api_keys`.
+  - Implemented `app/Controllers/ApiController.php`:
+    - `POST /api/v1/emails/send` & `POST /api/v1/send` – Enqueue transactional emails with suppression validation and structured JSON response.
+    - `GET /api/v1/emails/{id}` – Retrieve delivery status, error logs, and timestamps.
+    - `GET /api/v1/status` – Live system telemetry, worker heartbeat, and queue health metrics.
+    - `POST /api/v1/cron/run` & `POST /api/v1/worker/run` – Programmatic web-cron triggers for shared hosting without CLI access.
+  - Forwarded `HTTP_AUTHORIZATION` header in `.htaccess` and exempted stateless `/api/v1/` routes in `CsrfMiddleware.php`.
+- **Cron Jobs Verified & Enhanced**:
+  - Verified `cron/email-worker.php` single-batch and daemon execution modes; updated completion log branding to MailFlow.
+  - Enhanced `cron/cleanup.php` with automated pruning of expired password reset and email verification tokens (>48 hours).
+  - Optimized SMTP mailer socket timeout to 10 seconds for faster failure recovery.
+
+---
+
 ## [Release 2.0.1] - Clean Root URL Routing & Apache Direct Access (2026-11-03)
 
 ### 🚀 Enhancements & Architecture Updates
