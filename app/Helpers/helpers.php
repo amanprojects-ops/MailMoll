@@ -111,7 +111,16 @@ if (!function_exists('url')) {
 if (!function_exists('asset')) {
     function asset(string $path = ''): string
     {
-        return url('assets/' . ltrim($path, '/'));
+        $cleanPath = ltrim($path, '/');
+        $url = url('assets/' . $cleanPath);
+
+        // Resolve local file to determine modification timestamp for cache-busting
+        $localFile = base_path('assets/' . $cleanPath);
+        if (!file_exists($localFile)) {
+            $localFile = public_path('assets/' . $cleanPath);
+        }
+        $v = file_exists($localFile) ? filemtime($localFile) : '2.0.2';
+        return "{$url}?v={$v}";
     }
 }
 
