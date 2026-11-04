@@ -23,6 +23,7 @@
 
     <!-- Admin Theme CSS -->
     <link href="<?= asset('css/marketing.css') ?>" rel="stylesheet">
+    <link href="<?= asset('css/dashboard.css') ?>" rel="stylesheet">
 
     <style>
         :root {
