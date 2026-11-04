@@ -133,6 +133,43 @@ class Router
             }
         }
 
+        // Static asset delivery fallback (serves CSS/JS/images if routed through front controller)
+        if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/i', $uri)) {
+            $assetSubpath = preg_replace('#^/assets/#', '', $uri);
+            $candidatePaths = [
+                base_path('assets/' . ltrim($assetSubpath, '/')),
+                public_path('assets/' . ltrim($assetSubpath, '/')),
+                public_path(ltrim($uri, '/')),
+            ];
+
+            foreach ($candidatePaths as $candidate) {
+                if (file_exists($candidate) && is_file($candidate)) {
+                    $mimes = [
+                        'css' => 'text/css; charset=utf-8',
+                        'js' => 'application/javascript; charset=utf-8',
+                        'png' => 'image/png',
+                        'jpg' => 'image/jpeg',
+                        'jpeg' => 'image/jpeg',
+                        'gif' => 'image/gif',
+                        'svg' => 'image/svg+xml',
+                        'ico' => 'image/x-icon',
+                        'woff' => 'font/woff',
+                        'woff2' => 'font/woff2',
+                        'ttf' => 'font/ttf',
+                    ];
+                    $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
+                    $mime = $mimes[$ext] ?? 'application/octet-stream';
+
+                    http_response_code(200);
+                    header("Content-Type: {$mime}");
+                    header("Content-Length: " . filesize($candidate));
+                    header("Cache-Control: public, max-age=31536000");
+                    readfile($candidate);
+                    exit;
+                }
+            }
+        }
+
         // Route not found
         http_response_code(404);
         if (str_starts_with($uri, '/api/')) {
